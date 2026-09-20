@@ -1,0 +1,74 @@
+generated: '2026-09-19'
+method: searched
+probe: true
+source: https://github.com/solvela-ai/solvela/blob/main/docs/product/regulatory-position.md
+signals: {}
+summary: >-
+  No horizontal regulatory signal reaches the bar this artifact requires — a page carrying the substance, not
+  the word — so signals is empty and that emptiness is the measurement. The reason is structural rather than a
+  gap in looking: Solvela's website, docs and app hosts (solvela.ai, docs.solvela.ai, app.solvela.ai) all answer
+  HTTP 402 DEPLOYMENT_DISABLED from Vercel on every path, so no privacy policy, terms, subprocessor list, DPA,
+  accessibility statement or transparency page is reachable there; the API host 404s the conventional paths; and
+  the public repository carries no PRIVACY, TERMS or legal directory (only CODE_OF_CONDUCT.md). What the
+  provider does publish, in its repository, is unusually candid engineering disclosure — a regulatory-position
+  paper on how money flows, a data-persistence inventory, a security policy with response times, a free-tier
+  data-use warning, a per-component license table — none of which is one of the fourteen canonical signals.
+  They are recorded below as near-misses so a future sweep can see what was there and does not re-litigate it.
+probes:
+- {url: 'https://solvela.ai/privacy', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/terms', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/accessibility', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/accessibility/vpat', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/legal/subprocessors', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/legal/dpa', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/privacy/requests', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/transparency', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/trust', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/security/sbom', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/docs/data-residency', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/ai/transparency', status: 402, fetched: '2026-09-19'}
+- {url: 'https://solvela.ai/legal/report-content', status: 402, fetched: '2026-09-19'}
+- {url: 'https://api.solvela.ai/privacy', status: 404, fetched: '2026-09-19'}
+- {url: 'https://api.solvela.ai/terms', status: 404, fetched: '2026-09-19'}
+- {url: 'https://api.solvela.ai/legal/subprocessors', status: 404, fetched: '2026-09-19'}
+- {url: 'https://api.solvela.ai/trust', status: 404, fetched: '2026-09-19'}
+- {url: 'https://github.com/solvela-ai/solvela/blob/main/docs/product/regulatory-position.md', status: 200, fetched: '2026-09-19'}
+- {url: 'https://github.com/solvela-ai/solvela/blob/main/SECURITY.md', status: 200, fetched: '2026-09-19'}
+- {url: 'https://github.com/solvela-ai/solvela/blob/main/CODE_OF_CONDUCT.md', status: 200, fetched: '2026-09-19', note: 'the only conduct/legal file at the repository root; no PRIVACY, TERMS or legal/ directory in the 1,139-path tree'}
+near_misses:
+- candidate_signal: subprocessors
+  where: README "Free-tier data-use notice"; docs/product/regulatory-position.md "Data Persistence and Storage"; the /v1/models provider field
+  what_is_there: >-
+    The upstream LLM vendors a prompt is forwarded to are named (OpenAI, Anthropic, Google, xAI, DeepSeek, NVIDIA
+    NIM; Tavily for web search, Jupiter for prices) and the README warns that free-tier prompts may be used by
+    those vendors to improve their products, with human review. The regulatory-position paper inventories what is
+    persisted (spend rows, receipts, org metadata, admin audit IPs) and states that prompt and response content is
+    never stored.
+  why_not_recorded: Not a dated subprocessor table with purpose and location per vendor, and not on a legal page the provider commits to; it is an engineering document that says so itself ("describes system behavior, not legal conclusions").
+- candidate_signal: data_subject_request
+  where: docs/product/regulatory-position.md "No Account Creation or Identity Collection"
+  what_is_there: 'States that no names, emails, phone numbers or identifiers are collected and that audit-log IPs "can be deleted by row-level wipe with no third-party coordination".'
+  why_not_recorded: No request channel, process or response period for a data subject is published.
+- candidate_signal: ai_transparency
+  where: README free-tier notice; A2A agent card; MCP tool descriptions
+  what_is_there: Every surface says plainly that requests are proxied to third-party LLMs and which ones; the card names the counterpart as a gateway, not a person.
+  why_not_recorded: The disclosure is about routing to models, not an Article 50-style statement about AI-generated content or AI interaction with natural persons; Solvela is infrastructure between agents and models.
+- candidate_signal: incident_notification
+  where: SECURITY.md
+  what_is_there: 'Acknowledgement within 1 hour for P0 (custody/payment/auth) and 24 hours otherwise for VULNERABILITY REPORTS.'
+  why_not_recorded: A researcher-response commitment, not a customer incident-notification SLA. Captured in security/solvela-ai-vulnerability-disclosure.yml.
+- candidate_signal: support_lifetime
+  where: README "Licensing"; docs enterprise/commercial-license.mdx
+  what_is_there: 'BUSL-1.1 gateway converts to MIT on 2030-05-02 (four years after each release); "optional: support SLA tiers" under a commercial license.'
+  why_not_recorded: A license change date is not a stated support or security-update period for the product.
+- candidate_signal: sbom
+  where: SECURITY.md "Known transitive advisories — accepted with reason"
+  what_is_there: A table of accepted cargo/npm advisories with reasons and cargo audit / npm audit status.
+  why_not_recorded: Not a bill of materials in any named format (CycloneDX/SPDX); never derived, per the rule.
+- candidate_signal: data_residency
+  where: fly.toml at the repository root; server header Fly/... via 2 fly.io
+  what_is_there: The gateway runs on Fly.io; responses were served via the iad/ewr edges.
+  why_not_recorded: No published statement of where data is processed or stored, and the provider says no prompt content is stored at all.
+notes:
+- The provider's own framing (docs/product/regulatory-position.md, refreshed 2026-05-04) is that the gateway is non-custodial, read-only verification software that never holds funds or keys, collects no identity, and stores no prompt content — and that whether this places it inside or outside any regulatory category is "a determination for counsel". That posture is recorded here as context; which regimes apply is decided by the regime map, not by this artifact.
+- When solvela.ai comes back online this file should be re-run: the docs site source shows an enterprise "audit", "budgets" and "commercial-license" section and an "operations/security" page, any of which may gain a legal page.

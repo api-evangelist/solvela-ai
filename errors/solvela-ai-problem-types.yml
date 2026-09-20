@@ -1,0 +1,135 @@
+generated: '2026-09-19'
+method: derived
+source: openapi/solvela-ai-openapi.json
+probed: true
+docs: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/errors.mdx
+format: json-error-object
+envelope:
+  media_type: application/json
+  shape: '{ "error": { "type": "<snake_case_type>", "message": "<text>" } }'
+  fields:
+  - name: error.type
+    description: Machine-readable failure class (bad_request, model_not_found, invalid_payment, rate_limit_exceeded, provider_error, ...).
+  - name: error.message
+    description: Human-readable text. Payment-verification failures deliberately return a generic message; server-side detail stays in the gateway logs.
+  exception: >-
+    HTTP 402 WITHOUT a payment-signature header is not an error envelope at all: the body is the x402
+    PaymentRequired object at the top level ({x402_version, resource, accepts, cost_breakdown, error: "Payment
+    required", extensions}). A 402 WITH a bad payment header uses the envelope with error.type invalid_payment.
+    Clients distinguish the two by the presence of a top-level x402_version field (the provider's own guidance).
+  observed:
+  - {status: 404, body: '{"error":{"type":"model_not_found","message":"gpt-4o-mini"}}', url: 'POST https://api.solvela.ai/v1/chat/completions', note: 'unknown model id (the catalog uses provider-prefixed ids such as openai/gpt-4o-mini)'}
+  - {status: 404, body: '{"error":{"type":"not_found","message":"receipt not found"}}', url: 'GET https://api.solvela.ai/v1/receipts/does-not-exist'}
+  - {status: 402, body: '{"x402_version":2,"resource":{"url":"/v1/chat/completions","method":"POST"},"accepts":[...],"cost_breakdown":{"provider_cost":"0.122883","platform_fee":"0.000000","total":"0.122883","currency":"USDC","fee_percent":0},"error":"Payment required","extensions":{"bazaar":{...}}}', url: 'POST https://api.solvela.ai/v1/chat/completions', note: 'with a PAYMENT-REQUIRED response header carrying the base64 camelCase challenge'}
+  - {status: 401, body: '{"error":{"type":"unauthorized","message":"Valid admin token or API key required"}}', url: 'GET https://api.solvela.ai/v1/orgs'}
+  - {status: 401, body: '{"error":"unauthorized"}', url: 'GET https://api.solvela.ai/v1/admin/stats', note: 'flat string form — not the documented envelope'}
+  - {status: 401, body: '{"error":"missing or invalid Authorization header"}', url: 'GET https://api.solvela.ai/v1/wallet/{address}/stats', note: 'flat string form'}
+  - {status: 401, body: 'unauthorized', url: 'GET https://api.solvela.ai/metrics', note: 'text/plain'}
+  - {status: 404, body: '{"error":"no nonce accounts configured — use recent blockhash instead"}', url: 'GET https://api.solvela.ai/v1/nonce', note: 'flat string form'}
+  - {status: 404, body: '', url: 'GET https://api.solvela.ai/', note: 'empty body, application/json absent; routes outside the contract 404 with no body'}
+  - {status: 405, body: '', url: 'GET https://api.solvela.ai/a2a'}
+  note: >-
+    Not RFC 9457. The four contract operations use the {"error":{"type","message"}} envelope consistently; the
+    undeclared admin/enterprise routes answer with three different shapes (typed envelope, flat {"error":"..."}
+    string, and text/plain), which is worth knowing for a client that touches them. The A2A surface uses
+    JSON-RPC 2.0 error objects instead (observed -32602; documented -32001..-32003, -32007..-32009).
+problem_types:
+- status: 400
+  type: bad_request
+  title: Invalid request
+  source_operations: [createChatCompletion]
+  causes:
+  - Invalid parameters or message limit exceeded.
+  - Payment field validation — amount, network, asset or pay_to does not match the 402 quote ("Payment recipient does not match. Use the pay_to advertised in the 402 response.", "Payment asset is unsupported...", "Payment network is unsupported...").
+  - Escrow settle with missing token counts, unknown model or non-finite pricing (POST /v1/escrow/settle, undeclared).
+  remediation: Echo the accepted[] entry exactly as quoted; re-read the 402 before rebuilding the payment.
+- status: 401
+  type: unauthorized
+  title: Missing or invalid admin token / API key
+  source_operations: ['GET /v1/orgs (enterprise, undeclared)', 'GET /metrics (admin)', 'GET /v1/admin/stats (admin)', 'GET /v1/wallet/{address}/stats (session auth)']
+  causes: [No Authorization header, or a token that is not the admin token nor a valid solvela_k_ organisation key.]
+  note: Never returned by the four contract operations — x402 payment is the authorization there.
+- status: 402
+  type: payment_required
+  title: Payment required (x402 challenge)
+  source_operations: [createChatCompletion, 'POST /v1/messages', 'POST /v1/search', 'POST /v1/solana/price']
+  format: x402 PaymentRequired object (top level, snake_case) + PAYMENT-REQUIRED header (base64 camelCase)
+  causes: [No PAYMENT-SIGNATURE header on a request whose quoted cost is greater than 0 atomic USDC.]
+  remediation: Read accepts[] and cost_breakdown, sign the quoted exact (or escrow) payment for amount atomic USDC to pay_to within max_timeout_seconds (300), and resubmit the byte-identical request with the signed payload in PAYMENT-SIGNATURE. Observed live.
+- status: 402
+  type: invalid_payment
+  title: Payment verification failed
+  source_operations: [createChatCompletion]
+  causes:
+  - Transaction not verifiable on Solana (not yet confirmed, signer mismatch) — generic message by design.
+  - Replay — "transaction has already been used; each payment signature may only be submitted once" (Redis SET NX EX 120 on the signature).
+  - Expired or malformed payload; settlement not confirmed ("Payment transaction could not be confirmed. Please retry.").
+  remediation: Build a fresh transaction with a new blockhash and sign again; never resubmit a used signature. Wait a few seconds for confirmation before retrying.
+- status: 403
+  type: forbidden
+  title: Authenticated but lacking permission
+  source_operations: ['enterprise org endpoints (undeclared)']
+  causes: [A member-role key calling an admin-only organisation endpoint.]
+- status: 404
+  type: model_not_found
+  title: Unknown model id, alias or profile
+  source_operations: [createChatCompletion]
+  remediation: Use an id from listModels (provider-prefixed, e.g. openai/gpt-4o-mini), an alias (sonnet, gpt5, haiku, opus, gemini, flash, grok, deepseek, reasoner, o3-mini) or a profile (auto, eco, premium, free). Observed live with "gpt-4o-mini".
+- status: 404
+  type: not_found
+  title: Unknown or malformed receipt id
+  source_operations: [getReceipt]
+  note: Unknown and malformed ids return byte-identical 404s by design (no existence oracle). Observed live.
+- status: 408
+  type: request_timeout
+  title: Request exceeded the 120 s gateway timeout
+  source_operations: [createChatCompletion]
+  source: rate-limits.mdx (SOLVELA_REQUEST_TIMEOUT_SECS)
+- status: 415
+  type: unsupported_media_type
+  title: Image content sent to a model without vision capability
+  source_operations: [createChatCompletion]
+  remediation: Check capabilities.vision on the model in listModels before sending image_url content parts.
+- status: 429
+  type: rate_limit_exceeded
+  title: Rate limited
+  source_operations: [createChatCompletion, getReceipt]
+  headers: [retry-after, x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset]
+  note: The OpenAPI also names rate_limited as a possible type on createChatCompletion. Honor retry-after (seconds). See rate-limits/.
+- status: 500
+  type: settlement_failed
+  title: Payment settlement failed
+  source_operations: [createChatCompletion]
+  note: Grouped with internal_error under the contract's 5XX response.
+- status: 500
+  type: internal_error
+  title: Gateway error
+  source_operations: [createChatCompletion]
+- status: 502
+  type: provider_error
+  title: Upstream provider returned an error
+  source_operations: [createChatCompletion]
+- status: 503
+  type: upstream_unavailable
+  title: No provider could serve the paid request
+  source_operations: [createChatCompletion]
+  note: The docs state payment is NOT charged in this case.
+- status: 503
+  type: service_unavailable
+  title: Receipt storage not configured on this gateway
+  source_operations: [getReceipt]
+  note: Receipts cannot exist at all on such a deployment; distinct from a per-id 404.
+jsonrpc_errors:
+  surface: https://api.solvela.ai/a2a
+  codes:
+  - {code: -32600, meaning: Invalid request}
+  - {code: -32601, meaning: 'Method not found (message/stream, tasks/resubscribe are not routed)'}
+  - {code: -32602, meaning: 'Invalid params (observed live: "missing field `message`")'}
+  - {code: -32603, meaning: Internal error (also returned when the Redis task store is unavailable)}
+  - {code: -32001, meaning: Task not found or expired (10-minute TTL)}
+  - {code: -32002, meaning: Task not cancelable (settlement in flight or terminal state)}
+  - {code: -32003, meaning: Push notifications not supported}
+  - {code: -32007, meaning: 'Payment failed — replay, offer mismatch, verification or settlement failure; may carry data.last_cumulative for channel resync'}
+  - {code: -32008, meaning: 'Provider error — on the channel path no draw was taken and the same voucher may be resubmitted'}
+  - {code: -32009, meaning: Model not found}
+  source: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/a2a.mdx

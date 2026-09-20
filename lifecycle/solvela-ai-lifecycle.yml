@@ -1,0 +1,85 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+derived_from: openapi/solvela-ai-openapi.json
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+- https://github.com/solvela-ai/solvela/blob/main/STATUS.md
+- https://github.com/solvela-ai/solvela/blob/main/docs/product/feature-state.md
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/enterprise/commercial-license.mdx
+versioning:
+  scheme: URI path prefix /v1 for the API; independent semver-ish version numbers on each surface; deploys identified by Fly release numbers in the changelog
+  current_version: 'API path v1; OpenAPI info.version 0.1.0; agent card version 0.2.0; latest gateway release named in the docs Fly v463 (2026-07-14); SDKs 0.4.0 (2026-07-08)'
+  spec_url: https://api.solvela.ai/openapi.json
+  base_url: https://api.solvela.ai
+  policy_published: false
+  note: >-
+    No versioning policy page. The path carries /v1 and nothing has ever been /v2. The OpenAPI's info.version
+    (0.1.0) and the agent card's version (0.2.0) are not the same number and neither is the gateway release
+    number; the docs say the card's version "tracks the gateway release and changes over time". The served
+    OpenAPI is byte-identical to docs/openapi.json in the repository by construction (include_str! plus a
+    contract drift test), so the spec's history is the repository's git history. The company was formerly named
+    RCR / RustyClawRouter; the changelog header still says so.
+changelog:
+  url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+  format: dated entries in reverse chronological order with an Unreleased section; each entry names the PR, the Fly release it shipped in, and whether it is deployed
+  detail: changelog/solvela-ai-changelog.yml
+deprecation:
+  policy_published: false
+  sunset_header: false
+  deprecation_header: false
+  rfc8594: false
+  deprecated_operations: []
+  documented_deprecations:
+  - what: RCR_* environment-variable prefix
+    replacement: SOLVELA_* prefix
+    signal: runtime deprecation warning
+    evidence: 'README "Configuration": "the gateway also accepts the same vars under the old RCR_* prefix with a deprecation warning. Use SOLVELA_* for new deployments." Also x-rcr-request-id is still emitted alongside x-solvela-request-id on every response (observed).'
+  - what: /.well-known/agent.json
+    replacement: /.well-known/agent-card.json (A2A 0.3 canonical, RFC 8615)
+    signal: kept as a backward-compatibility alias; no removal date
+    evidence: 'changelog 2026-06-15 (Fly v407); both paths serve the identical 1,454-byte document (observed).'
+  - what: TOOLS export in @solvela/mcp-server
+    replacement: getTools()
+    signal: '@deprecated JSDoc: "Will be removed in a future version"'
+    evidence: sdks/mcp/src/tools.ts
+  - what: SDK releases before 0.2.2
+    signal: provider note — they predate the v2 payment envelope and cannot complete a payment against api.solvela.ai
+    evidence: dashboard/content/docs/sdks/index.mdx
+  note: >-
+    Zero operations carry deprecated: true. No Deprecation or Sunset headers are declared or observed, no
+    deprecation policy exists, and the retirements above are documented in prose with no dates. No Deprecation
+    pointer is emitted.
+license_change:
+  what: Gateway crate license
+  from: BUSL-1.1
+  to: MIT
+  change_date: '2030-05-02'
+  evidence: README "Licensing" and the commercial-license page ("Change Date 2030-05-02 for v0.2.x, after which the gateway becomes MIT automatically"); each release restarts the four-year clock.
+status_page:
+  url: null
+  probed:
+  - {url: 'https://status.solvela.ai/', status: 0, note: 'CNAME to cname.vercel-dns.com exists but the connection fails; nothing is served.'}
+  - {url: 'https://solvela.ai/status', status: 402, note: 'Vercel DEPLOYMENT_DISABLED, as for every path on solvela.ai.'}
+  live_signals:
+  - {url: 'https://api.solvela.ai/health', status: 200, body: '{"status":"ok"}', note: 'Liveness/readiness probe declared in the OpenAPI (operationId health). Not an incident history.'}
+  - {url: 'https://api.solvela.ai/v1/escrow/config', status: 200, note: 'Returns current_slot and the escrow program id; a freshness signal for the settlement path, not a status page.'}
+  - {url: 'https://github.com/solvela-ai/solvela/blob/main/STATUS.md', note: 'A hand-maintained shipping-status log in the repository ("live shipping status"), not an uptime page.'}
+  note: No status page and no incident history are published; no StatusPage pointer is emitted.
+sla:
+  published: false
+  note: >-
+    No uptime commitment. The commercial-license page lists "support SLA tiers, security advisory advance notice"
+    as optional inclusions of a paid license; no numbers are published. SECURITY.md states a vulnerability-report
+    acknowledgement time (1 hour for P0, 24 hours otherwise), which is a security-response commitment, not an
+    availability SLA.
+support:
+  channels:
+  - {channel: GitHub issues, url: 'https://github.com/solvela-ai/solvela/issues'}
+  - {channel: email, address: partnerships@solvela.ai, source: OpenAPI info.contact}
+  - {channel: email, address: info@solvela.ai, source: GitHub organisation profile}
+  - {channel: email, address: security@solvela.ai, source: SECURITY.md (vulnerabilities only)}
+current_state:
+  hosted_gateway: 'live — api.solvela.ai answered every probe on 2026-09-19 (Fly/57f2b87df, server date 2026-09-16); repository last pushed 2026-09-18'
+  marketing_and_docs_sites: 'down — solvela.ai, docs.solvela.ai, app.solvela.ai all return HTTP 402 DEPLOYMENT_DISABLED from Vercel; www.solvela.ai has no DNS record'
+  note: The API outlives its website at the moment. Everything a developer needs is reachable from the API host and the public repository.

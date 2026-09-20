@@ -1,0 +1,73 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/errors.mdx
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/errors.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/a2a.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/operations/security.mdx
+summary: >-
+  Solvela is a payment gateway but not a card acquirer, so it has no issuer decline codes. What it has is the
+  set of reasons a submitted x402 PAYMENT is refused, which is the same decision for an agent: the money did not
+  go through and here is why. The reasons are published as error messages rather than a code table; the
+  `code` column below is the error.type (REST) or JSON-RPC code (A2A) the refusal arrives under, and `masked`
+  records where the provider deliberately hides the specific cause from the payer. Amount mismatches surface as
+  400 before verification; verification failures as 402 invalid_payment; on A2A everything collapses to -32007.
+envelope_field: error.type (REST) / error.code (A2A JSON-RPC)
+decline_codes:
+- code: invalid_payment
+  status: 402
+  meaning: The PAYMENT-SIGNATURE header was present but the transaction could not be verified on Solana (signer mismatch, RPC error, not yet confirmed).
+  action: Wait a few seconds for confirmation and retry once; if it persists rebuild the transaction. Detail is in gateway logs only.
+  masked: true
+- code: invalid_payment (replay)
+  status: 402
+  meaning: '"transaction has already been used; each payment signature may only be submitted once" — the signature is in the 120 s replay set.'
+  action: Never resubmit a used signature; build a new transaction with a fresh blockhash and sign again.
+  masked: false
+- code: invalid_payment (unconfirmed)
+  status: 402
+  meaning: '"Payment transaction could not be confirmed. Please retry."'
+  action: Retry after confirmation; the 402 quote is valid for max_timeout_seconds (300).
+  masked: false
+- code: bad_request (pay_to mismatch)
+  status: 400
+  meaning: '"Payment recipient does not match. Use the pay_to advertised in the 402 response."'
+  action: Send USDC to the pay_to in the quote (currently 9QGtTUpvLmhggDuBciAeE67MmhECVFYdFLD7xKD4RSno on the hosted gateway) — read it from each 402, never hard-code it.
+  masked: false
+- code: bad_request (asset unsupported)
+  status: 400
+  meaning: '"Payment asset is unsupported. Use the asset advertised in the 402 response."'
+  action: Pay in the USDC-SPL mint from the quote (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v).
+  masked: false
+- code: bad_request (network unsupported)
+  status: 400
+  meaning: '"Payment network is unsupported. Use the network advertised in the 402 response."'
+  action: Sign on Solana mainnet (solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp).
+  masked: false
+- code: bad_request (amount)
+  status: 400
+  meaning: Transferred amount is below the quoted atomic amount (verification step 7, "transferred amount >= quoted price").
+  action: Pay at least accepts[].amount; overpayment on the exact scheme is not refunded (the receipt documents the divergence).
+  masked: false
+- code: settlement_failed
+  status: 500
+  meaning: The gateway accepted the payment payload but on-chain settlement failed.
+  action: Check the transaction on Solana before retrying; contact partnerships@solvela.ai with the x-solvela-request-id if funds moved.
+  masked: true
+- code: upstream_unavailable
+  status: 503
+  meaning: No provider could serve the paid request. The provider states payment is not charged.
+  action: Retry later; no refund action needed per the docs.
+  masked: false
+- code: -32007
+  status: 200 (JSON-RPC)
+  meaning: A2A payment failed — replay detected, accepted[] does not match the stored offer, verification or settlement failure, channel voucher rejected, or a tenant-restricted wallet on the A2A path.
+  action: For channel vouchers read data.last_cumulative and recompute; otherwise re-quote with message/send and pay again. The task reverts to input-required if funds did not move.
+  masked: true
+- code: -32002
+  status: 200 (JSON-RPC)
+  meaning: Task not cancelable — a settlement is in flight or the task is terminal.
+  action: Do not retry the cancel; poll tasks/get.
+  masked: false
+channel_refusals:
+  note: Spend-down-channel vouchers are refused for wrong delta, stale cumulative, expired slot, over-draw, unknown or closed channel, or "channel scheme is not accepted on this endpoint" when channels are disabled; post-authentication refusals return last_cumulative so the client can resync.

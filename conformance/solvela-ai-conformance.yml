@@ -1,0 +1,141 @@
+generated: '2026-09-19'
+method: searched
+source: https://api.solvela.ai/openapi.json
+derived_from: openapi/solvela-ai-openapi.json
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/x402.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/a2a.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/authentication.mdx
+summary: >-
+  Solvela's conformance profile is the agent-commerce protocol stack, and unusually for this catalog most of it
+  was OBSERVED on the wire rather than read from a page: an x402 v2 402 challenge (body and PAYMENT-REQUIRED
+  header) on POST /v1/chat/completions, /v1/messages and /v1/search; an /.well-known/x402 discovery document; an
+  x-payment-info extension inside the served OpenAPI; an A2A 0.3.0 agent card declaring the a2a-x402 and AP2
+  extensions as required, backed by a live JSON-RPC 2.0 responder; CAIP-2 network identifiers; and the
+  Coinbase-style x402 Bazaar discovery block inside the 402 body. It also declares OpenAI Chat Completions and
+  Anthropic Messages wire compatibility and ships an MCP server (stdio). It declares and serves none of the
+  enterprise identity or hygiene standards: no OAuth 2 / OIDC, no RFC 9457 problem details, no RFC 9116
+  security.txt (claimed in SECURITY.md but 404), no RFC 8594 deprecation signalling, no RFC 9727 API catalog, and
+  no published SOC 2 / ISO 27001 style compliance programme — so no Compliance pointer is emitted.
+standards:
+- id: x402
+  name: x402 HTTP payment protocol
+  version: 2
+  conforms: true
+  verification: observed
+  domain_standard_signature: true
+  evidence: >-
+    POST https://api.solvela.ai/v1/chat/completions without PAYMENT-SIGNATURE returned HTTP 402 with a JSON body
+    {x402_version: 2, resource: {url, method}, accepts: [{scheme: exact, network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp,
+    amount, asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, pay_to, max_timeout_seconds: 300}, {scheme: escrow,
+    ..., escrow_program_id}], cost_breakdown, error: "Payment required"} and a PAYMENT-REQUIRED response header
+    carrying the canonical camelCase challenge base64-encoded. The same shape came back from POST /v1/messages
+    and POST /v1/search. The OpenAPI declares the x402Payment security scheme (apiKey in header PAYMENT-SIGNATURE),
+    a 402 response with the PAYMENT-REQUIRED header, and x-payment-info {protocols: [x402], price: {mode: dynamic,
+    currency: USD, min: 0.000001, max: 1.00}} on createChatCompletion. GET /v1/supported returned
+    {kinds: [{x402_version: 2, scheme: exact, network, asset}], gateway: Solvela, pricing_url: /v1/models}.
+  note: >-
+    The payment leg itself was not exercised — nothing was signed or purchased. The x402 spec's canonical field
+    casing is camelCase; Solvela's body is snake_case with the canonical rendering in the header, which the
+    contract states explicitly.
+- id: x402-well-known-discovery
+  name: /.well-known/x402 discovery document
+  conforms: true
+  verification: observed
+  domain_standard_signature: true
+  evidence: 'GET https://api.solvela.ai/.well-known/x402 -> 200 application/json {"version":1,"resources":["https://api.solvela.ai/v1/chat/completions"]}; saved to well-known/solvela-ai-x402.json. The provider''s changelog (2026-06-17) names x402scan''s discovery precedence (OpenAPI -> /.well-known/x402 -> endpoint-only) as the reason it was added.'
+- id: x402-bazaar-extension
+  name: x402 Bazaar discovery extension (extensions.bazaar in the 402 body)
+  conforms: true
+  verification: observed
+  evidence: 'The live 402 body on /v1/chat/completions carries extensions.bazaar.info {input: {type: http, method: POST, bodyType: json}, output: {type: json, example}} and extensions.bazaar.schema (JSON Schema 2020-12 for the input body and output example). Absent from the header rendering, as the OpenAPI PaymentRequired.extensions description states.'
+- id: a2a
+  name: Agent2Agent protocol
+  version: '0.3.0'
+  conforms: true
+  verification: observed
+  evidence: >-
+    a2a/solvela-ai-agent-card.json — protocolVersion "0.3.0", url https://api.solvela.ai/a2a, preferredTransport
+    JSONRPC, capabilities object, skills[] of 1; POST https://api.solvela.ai/a2a answered
+    {"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"Invalid params: missing field `message`"}}. Graded
+    conformant in a2a/solvela-ai-a2a.yml. The docs list message/send, tasks/get, tasks/cancel served and
+    pushNotificationConfig/* answered -32003.
+- id: a2a-x402
+  name: a2a-x402 payment extension
+  version: v0.1
+  conforms: true
+  domain_standard_signature: true
+  evidence: 'a2a/solvela-ai-agent-card.json capabilities.extensions[1].uri = https://github.com/google-a2a/a2a-x402/v0.1, required = true, params {network: solana, asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, schemes: [exact, escrow]}. The docs describe x402.payment.required / x402.payment.payload / x402.payment.status / x402.payment.receipts message-metadata keys.'
+  note: Declared REQUIRED, so every skill depends on it — the contract-level signature for agent commerce this market has.
+- id: ap2
+  name: Agent Payments Protocol (AP2) — merchant role
+  version: v0.1
+  conforms: true
+  verification: declared
+  evidence: 'a2a/solvela-ai-agent-card.json capabilities.extensions[0].uri = https://github.com/google-agentic-commerce/ap2/tree/v0.1, required = true, params {roles: [merchant]}, description "AP2 merchant for AI agent LLM payments".'
+  note: Declared in the card; no AP2 mandate or cart flow was exercised or is documented beyond the declaration.
+- id: json-rpc-2.0
+  conforms: true
+  verification: observed
+  evidence: 'POST /a2a returns {"jsonrpc":"2.0", ...} with a standard -32602 Invalid params error object; the docs map A2A codes -32001..-32003 and Solvela codes -32007..-32009.'
+- id: mcp
+  name: Model Context Protocol
+  conforms: true
+  verification: declared
+  evidence: '@solvela/mcp-server 0.1.1 on npm (stdio), built on @modelcontextprotocol/sdk, eight tools with JSON-Schema inputSchema in sdks/mcp/src/tools.ts. See mcp/solvela-ai-mcp.yml. No remote MCP endpoint exists (POST /mcp 404), so no protocol version was observed on the wire.'
+- id: openai-chat-completions-compat
+  name: OpenAI Chat Completions API wire compatibility
+  conforms: true
+  verification: declared
+  evidence: 'OpenAPI info.description "OpenAI-compatible LLM chat completions"; ChatCompletionRequest/ChatMessage/ToolCall/ChatCompletionResponse schemas mirror the OpenAI shapes (choices[], usage, tool_calls, finish_reason); live 404 for an unknown model used the OpenAI-style {"error":{"type","message"}} envelope; the Bazaar output example is an OpenAI chat.completion object.'
+- id: anthropic-messages-compat
+  name: Anthropic Messages API relay
+  conforms: true
+  verification: observed
+  evidence: 'POST https://api.solvela.ai/v1/messages returned the x402 402 challenge (resource.url /v1/messages); the README describes it as a byte-for-byte passthrough for Anthropic-provider models. Not declared in the published OpenAPI.'
+- id: sse
+  name: Server-Sent Events streaming
+  conforms: true
+  verification: declared
+  evidence: 'createChatCompletion 200 declares text/event-stream alongside application/json when stream is true.'
+- id: caip-2
+  name: CAIP-2 chain identifier
+  conforms: true
+  verification: observed
+  evidence: 'accepts[].network = solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp (Solana mainnet-beta) in the live 402 and in GET /v1/escrow/config.'
+- id: openapi-3.1
+  conforms: true
+  version: 3.1.0
+  evidence: openapi/solvela-ai-openapi.json — openapi "3.1.0", 4 operations, 10 component schemas, one securityScheme, license BUSL-1.1 identifier.
+- id: prometheus-exposition
+  conforms: true
+  verification: declared
+  evidence: 'README: 15 metrics prefixed solvela_ behind an admin-gated /metrics; live GET /metrics returned 401 "unauthorized".'
+  note: Admin-only; not a public surface.
+- id: oauth2
+  conforms: false
+  evidence: No oauth2 securityScheme; /.well-known/oauth-authorization-server and /.well-known/oauth-protected-resource 404 on api.solvela.ai. Enterprise API keys are plain Bearer tokens prefixed solvela_k_ (docs), not OAuth.
+- id: oidc
+  conforms: false
+  evidence: /.well-known/openid-configuration 404.
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: 'Errors use {"error":{"type","message"}} (application/json), never application/problem+json; the 402 challenge body is the x402 PaymentRequired object at the top level.'
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: '/.well-known/security.txt and /security.txt 404 on api.solvela.ai and solvela-gateway.fly.dev; 402 on solvela.ai. SECURITY.md in the repository says one "is served from api.solvela.ai" — it is not, as of 2026-09-19.'
+- id: rfc8594-sunset
+  conforms: false
+  evidence: No Sunset or Deprecation response headers declared or observed; see lifecycle/.
+- id: rfc9727-api-catalog
+  conforms: false
+  evidence: /.well-known/api-catalog 404.
+- id: apis-json
+  conforms: false
+  evidence: /.well-known/apis.json and /apis.json 404.
+compliance_programs:
+  published: false
+  note: >-
+    No SOC 2, ISO 27001, PCI DSS or similar attestation is published; the provider's own regulatory-position
+    document describes the gateway as non-custodial read-only verification software and defers the
+    money-transmitter question to counsel. No Compliance pointer is emitted.

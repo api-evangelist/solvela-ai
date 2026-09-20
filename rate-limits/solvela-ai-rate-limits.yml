@@ -1,0 +1,110 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/rate-limits.mdx
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/rate-limits.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/operations/security.mdx
+- https://api.solvela.ai/openapi.json
+probed:
+- {url: 'https://api.solvela.ai/.well-known/agent-card.json', fetched: '2026-09-19', headers_observed: 'x-ratelimit-limit: 60, x-ratelimit-remaining: 37, x-ratelimit-reset: 60'}
+- {url: 'https://api.solvela.ai/v1/receipts/x', fetched: '2026-09-19', headers_observed: 'x-ratelimit-limit: 60, x-ratelimit-remaining: 38 -> 37 -> 36 across three consecutive calls, x-ratelimit-reset: 60', note: 'The contract says this route carries a stricter 20/min cap; the headers returned to an anonymous client showed the generic 60 bucket. Recorded as observed.'}
+- {url: 'https://api.solvela.ai/v1/models', fetched: '2026-09-19', headers_observed: 'no x-ratelimit-* headers', note: 'Documented as exempt from rate limiting; the absence of headers is consistent with that.'}
+limit_count: 8
+summary: >-
+  Limits are documented in the provider's rate-limits page and declared on the OpenAPI's 429 responses, and the
+  runtime headers were observed live. The primary limit is 60 requests per 60-second fixed window keyed on the
+  PAYER WALLET (derived from the signed transaction in the payment-signature header), falling back to the
+  client's TCP peer IP for requests without a decodable payment; X-Forwarded-For is never trusted. Free ($0)
+  requests get a much stricter per-IP and global cap because they ride a shared upstream free-tier key. All
+  numbers are the hosted defaults and are operator-tunable on self-hosted gateways via the named env vars.
+  Exhaustion is a 429 with error.type rate_limit_exceeded (the OpenAPI also names rate_limited) and a
+  retry-after header equal to x-ratelimit-reset. Note that x-ratelimit-reset is the WINDOW LENGTH in seconds,
+  not a Unix timestamp.
+headers:
+  limit: x-ratelimit-limit
+  remaining: x-ratelimit-remaining
+  reset: x-ratelimit-reset
+  reset_semantics: seconds — the fixed window length (60), not an epoch timestamp; the window starts at the client's first request in it
+  retry_after: retry-after (429 only; same value as x-ratelimit-reset)
+  request_id: x-solvela-request-id (legacy alias x-rcr-request-id)
+exhaustion:
+  status: 429
+  error_types: [rate_limit_exceeded, rate_limited]
+  body: '{"error":{"type":"rate_limit_exceeded","message":"..."}}'
+rate_limits:
+- name: Paid per-client
+  scope: per-wallet (payer pubkey from the payment-signature header); per-IP fallback when no payment is decodable
+  limit: 60
+  window: 60s
+  metric: requests
+  burst: null
+  env: SOLVELA_RATE_LIMIT_MAX
+  applies_to: [createChatCompletion, 'POST /v1/messages', 'POST /v1/search', 'POST /v1/solana/price', 'POST /a2a', getReceipt, well-known and discovery routes]
+  source: rate-limits.mdx "Middleware stack"; headers observed live
+- name: Free per-IP
+  scope: per client IP (TCP peer, never X-Forwarded-For)
+  limit: 5
+  window: 60s
+  metric: requests with a quoted cost of exactly 0 atomic USDC
+  env: SOLVELA_FREE_TIER_RATE_LIMIT
+  applies_to: ['createChatCompletion with a $0 model or the free/oss/open profile']
+  source: rate-limits.mdx "Free tier vs paid limits"
+- name: Free aggregate (global)
+  scope: all free clients combined, gateway-wide
+  limit: 12
+  window: 60s
+  metric: requests
+  env: SOLVELA_FREE_TIER_GLOBAL_RPM
+  note: Backed by one Redis key across instances; degrades to a per-instance in-memory counter without Redis.
+  source: rate-limits.mdx
+- name: Unknown-client bucket (paid limiter)
+  scope: all clients with no identifiable peer IP, shared
+  limit: 10
+  window: 60s
+  metric: requests
+  note: Fixed; not env-overridable.
+  source: rate-limits.mdx "Per-IP free limit"
+- name: Unknown-client bucket (free limiter)
+  scope: all unidentified free clients, shared
+  limit: 2
+  window: 60s
+  metric: requests
+  note: Fixed; not env-overridable.
+  source: rate-limits.mdx
+- name: Receipt lookups per IP
+  scope: per client IP
+  limit: 20
+  window: 60s
+  metric: requests
+  applies_to: [getReceipt]
+  note: 5/min for the unknown bucket. Declared in the OpenAPI 429 description for GET /v1/receipts/{receipt_id} "to bound receipt-id scanning"; the same per-IP pattern is documented for A2A tasks/get.
+  source: 'openapi/solvela-ai-openapi.json#getReceipt (429); concepts/a2a.mdx'
+- name: Global in-flight concurrency
+  scope: gateway-wide
+  limit: 256
+  window: concurrent
+  metric: in-flight requests
+  env: SOLVELA_MAX_CONCURRENT_REQUESTS
+  source: rate-limits.mdx
+- name: Request timeout
+  scope: per request
+  limit: 120
+  window: seconds
+  metric: wall-clock
+  exhaustion_status: 408
+  env: SOLVELA_REQUEST_TIMEOUT_SECS
+  source: rate-limits.mdx
+size_and_time_limits:
+- {name: payment-signature header size, limit: 50 KB, source: operations/security.mdx "Header size limit"}
+- {name: replay-protection TTL on a transaction signature, limit: 120 s (Redis SET NX EX 120), source: operations/security.mdx}
+- {name: '402 quote validity (max_timeout_seconds)', limit: 300 s, source: 'live 402 challenge accepts[].max_timeout_seconds'}
+- {name: A2A task record TTL, limit: 10 minutes from last state change, source: concepts/a2a.mdx}
+- {name: A2A serve bound, limit: 540 s, source: concepts/a2a.mdx "Voucher expiry"}
+- {name: spend-down channel max deposit (hosted), limit: 100 USDC, source: docs/product/feature-state.md}
+- {name: spend-down channel daily refund cap (hosted), limit: 500 USDC/day, source: docs/product/feature-state.md}
+- {name: web_search max_results, limit: 20, source: sdks/mcp/src/tools.ts}
+- {name: solana_price mints per call, limit: 50, source: sdks/mcp/src/tools.ts and GET /v1/services}
+exempt_endpoints: [/health, /v1/models, /metrics]
+note: >-
+  /metrics is exempt from rate limiting but is admin-gated (observed 401 "unauthorized" anonymously). No
+  per-plan or per-tier limits exist because there are no plans — see plans/solvela-ai-plans-pricing.yml.

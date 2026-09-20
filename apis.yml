@@ -1,23 +1,201 @@
 aid: solvela-ai
 name: Solvela
-description: 'Solvela is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry)
-  and added to the network as a stub for full-pipeline profiling.'
+description: 'Solvela is a Solana-native payment gateway for AI agents: an OpenAI-compatible LLM proxy at api.solvela.ai
+  where every paid request is settled per call in USDC-SPL over the x402 protocol (HTTP 402 challenge, signed payment,
+  retry) with no API key and no account, plus a trustless on-chain escrow scheme, a spend-down voucher channel,
+  a 15-dimension smart router across 44 models from six upstream providers (OpenAI, Anthropic, Google, xAI, DeepSeek,
+  NVIDIA NIM), an A2A 0.3.0 agent card, a stdio MCP server and SDKs in TypeScript, Python, Go and Rust. The gateway
+  is open source (BUSL-1.1 gateway, Apache-2.0 libraries) at github.com/solvela-ai/solvela.'
 url: https://raw.githubusercontent.com/api-evangelist/solvela-ai/refs/heads/main/apis.yml
 x-type: company
 x-source: harvest:a2a-registry
-x-tier: stub
-x-tier-reason: harvest
+x-tier: profiled
+x-tier-reason: enrichment pass 2026-09-19 (local-v3; was a2a-registry harvest stub)
 specificationVersion: '0.20'
 created: '2026-09-19'
 modified: '2026-09-19'
 tags:
 - Company
-apis: []
+- Payments
+- AI
+- LLM Gateway
+- x402
+- Solana
+- Stablecoins
+- AI Agents
+- MCP
+- A2A
+- Agentic Commerce
+apis:
+- aid: solvela-ai:solvela-gateway-api
+  name: Solvela Gateway API
+  description: 'OpenAI-compatible chat completions paid per request in USDC-SPL on Solana via x402: POST /v1/chat/completions
+    without a PAYMENT-SIGNATURE header returns an HTTP 402 challenge quoting the USDC cost; sign the quoted exact
+    or escrow payment and resubmit. GET /v1/models lists 44 models with per-token USDC pricing, GET /v1/receipts/{receipt_id}
+    returns the payment receipt for a paid call, and GET /health is the liveness probe. Zero-priced NVIDIA NIM and
+    Gemini Flash-Lite models are served free without any payment.'
+  humanURL: https://github.com/solvela-ai/solvela
+  baseURL: https://api.solvela.ai
+  tags:
+  - LLM Gateway
+  - x402
+  - Payments
+  - Solana
+  - AI
+  properties:
+  - type: OpenAPI
+    url: openapi/solvela-ai-openapi.json
+  - type: OpenAPI
+    name: OpenAPI (provider-hosted)
+    url: https://api.solvela.ai/openapi.json
+  - type: Documentation
+    url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+  - type: APIReference
+    url: https://api.solvela.ai/openapi.json
+  - type: AgentCard
+    url: a2a/solvela-ai-a2a.yml
+  - type: AgentCard
+    name: Agent card (provider-hosted)
+    url: https://api.solvela.ai/.well-known/agent-card.json
+  - type: Overlay
+    url: overlays/solvela-ai-openapi-overlay.yaml
+  - type: MCPServer
+    url: mcp/solvela-ai-mcp.yml
+  - type: MCPServer
+    name: MCP server (npm, stdio)
+    url: https://www.npmjs.com/package/@solvela/mcp-server
+  - type: ToolCrosswalk
+    url: mcp/solvela-ai-tool-crosswalk.yml
+  - type: WellKnown
+    url: well-known/solvela-ai-well-known.yml
+  - type: Pricing
+    url: https://api.solvela.ai/pricing
+  - type: RateLimits
+    url: rate-limits/solvela-ai-rate-limits.yml
+  - type: Plans
+    url: plans/solvela-ai-plans-pricing.yml
+  - type: ErrorCatalog
+    url: errors/solvela-ai-problem-types.yml
+  - type: Authentication
+    url: authentication/solvela-ai-authentication.yml
+  - type: Conventions
+    url: conventions/solvela-ai-conventions.yml
+  - type: DataModel
+    url: data-model/solvela-ai-data-model.yml
+  - type: AgentSkill
+    url: skills/_index.yml
+  - type: AgenticAccess
+    url: agentic-access/solvela-ai-agentic-access.yml
+  - type: Sandbox
+    url: sandbox/solvela-ai-sandbox.yml
+  - type: ChangeLog
+    url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+  - type: GettingStarted
+    url: https://github.com/solvela-ai/solvela#quick-start
+  - type: SourceCode
+    url: https://github.com/solvela-ai/solvela
+  image: https://avatars.githubusercontent.com/u/230226533?v=4
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Authentication
+  url: authentication/solvela-ai-authentication.yml
+- type: DomainSecurity
+  url: security/solvela-ai-domain-security.yml
+- type: AgenticAccess
+  url: agentic-access/solvela-ai-agentic-access.yml
 - type: Website
   url: https://solvela.ai/
+  note: 'Probed 2026-09-19: HTTP 402 text/plain "DEPLOYMENT_DISABLED" from Vercel on every path (also app.solvela.ai
+    and docs.solvela.ai; www.solvela.ai has no DNS). Kept because the provider itself declares https://solvela.ai
+    as its URL in the agent card provider.url and the OpenAPI info.contact.url, and the API host api.solvela.ai
+    is live.'
+- type: Documentation
+  url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+  note: Source of the docs.solvela.ai site; the hosted docs answered 402 DEPLOYMENT_DISABLED on 2026-09-19.
+- type: GettingStarted
+  url: https://github.com/solvela-ai/solvela#quick-start
+- type: GitHubOrganization
+  url: https://github.com/solvela-ai
+- type: SourceCode
+  url: https://github.com/solvela-ai/solvela
+- type: Pricing
+  url: https://api.solvela.ai/pricing
+  note: Machine-readable per-model USDC price table served by the gateway (HTTP 200, application/json).
+- type: ChangeLog
+  url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+- type: Support
+  url: https://github.com/solvela-ai/solvela/issues
+- type: License
+  url: https://github.com/solvela-ai/solvela/blob/main/LICENSE
+- type: AgentCard
+  url: a2a/solvela-ai-a2a.yml
+- type: WellKnown
+  url: well-known/solvela-ai-well-known.yml
+- type: MCPServer
+  url: mcp/solvela-ai-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/solvela-ai-tool-crosswalk.yml
+- type: Packages
+  url: packages/solvela-ai-packages.yml
+- type: SDKs
+  url: packages/solvela-ai-packages.yml
+- type: LLMsTxt
+  url: llms/solvela-ai-llms.txt
+- type: Conformance
+  url: conformance/solvela-ai-conformance.yml
+- type: ErrorCatalog
+  url: errors/solvela-ai-problem-types.yml
+- type: DeclineCodes
+  url: errors/solvela-ai-decline-codes.yml
+- type: Lifecycle
+  url: lifecycle/solvela-ai-lifecycle.yml
+- type: VulnerabilityDisclosure
+  url: security/solvela-ai-vulnerability-disclosure.yml
+- type: Sandbox
+  url: sandbox/solvela-ai-sandbox.yml
+- type: Conventions
+  url: conventions/solvela-ai-conventions.yml
+- type: ChangeLog
+  url: changelog/solvela-ai-changelog.yml
+- type: CLI
+  url: cli/solvela-ai-cli.yml
+- type: DataModel
+  url: data-model/solvela-ai-data-model.yml
+- type: Plans
+  url: plans/solvela-ai-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/solvela-ai-rate-limits.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Security
+  url: https://github.com/solvela-ai/solvela/blob/main/SECURITY.md
+  note: Vulnerability disclosure policy (security@solvela.ai; 1 h ack for P0, 24 h otherwise). The security.txt
+    the file claims is served from api.solvela.ai returned 404 on 2026-09-19.
+image: https://avatars.githubusercontent.com/u/230226533?v=4
+x-enrichment:
+  date: '2026-09-19'
+  status: enriched
+  artifacts_added: 30
+  pass: local-v3
+x-coverage:
+  state: covered
+  detail: The API host api.solvela.ai is fully live (OpenAPI, agent card, x402 discovery, live 402 challenges),
+    while the marketing, docs and app hosts (solvela.ai, docs.solvela.ai, app.solvela.ai) return HTTP 402 DEPLOYMENT_DISABLED
+    from Vercel on every path and www.solvela.ai has no DNS record; documentation was read from its public source
+    in the GitHub monorepo.
+  evidence:
+  - url: https://api.solvela.ai/openapi.json
+    status: 200
+  - url: https://api.solvela.ai/.well-known/agent-card.json
+    status: 200
+  - url: https://solvela.ai/
+    status: 402
+  - url: https://docs.solvela.ai/
+    status: 402
+  - url: https://solvela.ai/docs
+    status: 402
+  checked: '2026-09-19'

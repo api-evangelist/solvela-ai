@@ -1,0 +1,80 @@
+generated: '2026-09-19'
+method: derived
+source: mcp/solvela-ai-mcp.yml (tools read from the published sdks/mcp/src/tools.ts) bound to openapi/solvela-ai-openapi.json
+summary: >-
+  Eight MCP tools against a four-operation OpenAPI. Three tools bind cleanly to createChatCompletion and
+  listModels. The other five reach surfaces the provider runs but has not put in its published contract: two
+  marketplace routes (POST /v1/search, POST /v1/solana/price) that answer live 402 challenges and are listed by
+  GET /v1/services, an escrow deposit that is an on-chain transaction parameterised by GET /v1/escrow/config, and
+  two client-side composites. The OpenAPI documents 4 of roughly 20 routes the README table lists, so the
+  contract — not the MCP server — is the narrow projection here. Confidence is set from name and description
+  only; the MCP server was not executed and tools/list was not called.
+surfaces:
+  openapi:
+    file: openapi/solvela-ai-openapi.json
+    url: https://api.solvela.ai/openapi.json
+    operations: 4
+    gated: false
+  mcp:
+    package: '@solvela/mcp-server 0.1.1 (stdio)'
+    tools: 8
+    gated: not applicable — no remote endpoint; tool list read from source, inputSchemas real
+  graphql: none
+  a2a:
+    endpoint: https://api.solvela.ai/a2a
+    skills: 1
+    note: The single A2A skill (chat-completion) is the same createChatCompletion pipeline over JSON-RPC message/send.
+crosswalk:
+- tool: chat
+  category: chat
+  rest: [createChatCompletion]
+  binding: rest
+  confidence: high
+  note: model + prompt (+ system, max_tokens, temperature) map onto ChatCompletionRequest.model / messages[] / max_tokens / temperature. The MCP server performs the 402 -> sign -> retry dance so the caller never sees PAYMENT-SIGNATURE.
+- tool: smart_chat
+  category: chat
+  rest: [createChatCompletion]
+  binding: rest
+  confidence: high
+  note: Same operation; the profile (eco|auto|premium|free) is sent as the `model` value, which the contract documents as accepting "a routing profile".
+- tool: list_models
+  category: catalog
+  rest: [listModels]
+  binding: rest
+  confidence: high
+  note: The optional filter is applied client-side; listModels has no parameters.
+- tool: wallet_status
+  category: diagnostics
+  rest: [health]
+  binding: composite
+  confidence: medium
+  note: Gateway reachability comes from GET /health; the wallet address and Solana RPC status come from the local environment and a Solana RPC read, not from Solvela's API.
+mcp_only:
+- tool: web_search
+  reason: Backed by POST /v1/search, which is live (402 x402 challenge observed 2026-09-19, 0.010 USDC) and listed in GET /v1/services and the README, but absent from the published OpenAPI.
+- tool: solana_price
+  reason: Backed by POST /v1/solana/price, live and listed in GET /v1/services (0.001 USDC), absent from the published OpenAPI.
+- tool: spending
+  reason: Reads and resets a local session file (~/.solvela/mcp-session.json); no REST call.
+- tool: deposit_escrow
+  reason: Builds and broadcasts a Solana escrow-deposit transaction against program 9neDHouXgEgHZDde5SpmqqEZ9Uv35hFcjtFEPxomtHLU using parameters from GET /v1/escrow/config (live, not in the OpenAPI); the deposit is then spent through createChatCompletion with the escrow scheme.
+rest_only:
+- operation: getReceipt
+  capability: receipts
+  note: Payment receipts by UUID (X-Solvela-Receipt header). No MCP tool surfaces them; the A2A path returns the receipt path in x402.payment.receipts metadata.
+undeclared_routes_seen_live:
+- {method: GET, path: /pricing, status: 200, note: full USDC price table}
+- {method: GET, path: /v1/services, status: 200}
+- {method: GET, path: /v1/supported, status: 200, note: x402 payment-method discovery}
+- {method: GET, path: /v1/escrow/config, status: 200}
+- {method: POST, path: /v1/messages, status: 402, note: Anthropic-native relay}
+- {method: POST, path: /v1/search, status: 402}
+- {method: GET, path: /v1/nonce, status: 404, note: '"no nonce accounts configured — use recent blockhash instead"'}
+- {method: GET, path: /v1/orgs, status: 401, note: enterprise API-key surface}
+coverage:
+  tools_named: 8
+  tools_bound_to_rest: 4
+  mcp_only: 4
+  rest_operations_total: 4
+  rest_operations_with_tool: 3
+  rest_only: 1

@@ -1,0 +1,128 @@
+generated: '2026-09-19'
+method: derived
+source: openapi/solvela-ai-openapi.json
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/escrow.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/spend-down-channel.mdx
+- https://github.com/solvela-ai/solvela/blob/main/docs/product/regulatory-position.md
+summary: >-
+  Derived from the 10 component schemas, the live /v1/models, /v1/services and /v1/escrow/config responses and
+  the payment-flow docs. The contract has exactly one $ref chain between top-level schemas — Receipt ->
+  ReceiptCostBreakdown and Receipt -> ReceiptVendorSettlement — and links everything else by identifier: a
+  model id ("provider/model") on requests, responses and receipts; a payer wallet (base58 pubkey) on receipts
+  and rate limits; a Solana transaction signature as the payment reference; a UUIDv4 receipt id carried in the
+  X-Solvela-Receipt header. The two roots are the WALLET (the buyer — "Agents are identified solely by their
+  Solana wallet address") and the MODEL (the priced product). A Payment joins them per request and is what a
+  Receipt records. There is no expansion parameter; a client resolves the graph by following ids.
+id_style:
+  format: mixed, all opaque
+  prefixes:
+  - {entity: Model, example: 'openai/gpt-4o, anthropic/claude-sonnet-4-5-20250929, nvidia/nvidia/nemotron-nano-9b-v2', note: '<provider>/<model>; NVIDIA NIM ids carry a doubled prefix'}
+  - {entity: Receipt, example: 'UUIDv4 in X-Solvela-Receipt', note: 'unguessable; a bearer capability'}
+  - {entity: Request, example: 'UUID in x-solvela-request-id'}
+  - {entity: Wallet, example: 'base58 Solana pubkey, e.g. 9QGtTUpvLmhggDuBciAeE67MmhECVFYdFLD7xKD4RSno'}
+  - {entity: Payment (exact), example: 'base58 Solana transaction signature'}
+  - {entity: EscrowAccount, example: 'PDA from seeds ["escrow", agent_pubkey, service_id]', note: 'service_id is a client-generated 32-byte request correlation id, base64'}
+  - {entity: ChatCompletion, example: 'chatcmpl-...', note: 'OpenAI-style id in ChatCompletionResponse.id (Bazaar example chatcmpl-solvela-example)'}
+  - {entity: A2A Task, example: 'opaque task id (bearer capability, 10-minute TTL)'}
+  - {entity: EnterpriseApiKey, example: 'solvela_k_...', note: 'prefix is the only non-secret part stored'}
+  - {entity: Service (marketplace), example: 'web-search, solana-price'}
+entities:
+- name: Wallet
+  description: A Solana public key. The buyer's identity for every paid request; the signer of exact payments, the depositor of escrow, the funder of a channel; the rate-limit key.
+  schemas: []
+  relationships:
+  - {has_many: Payment, via: payer_wallet}
+  - {has_many: Receipt, via: payer_wallet}
+  - {has_many: EscrowAccount, via: agent_pubkey}
+  - {has_many: Channel, via: funding wallet}
+- name: Model
+  description: A priced upstream model with capabilities and context window; also the unit of routing (profiles and aliases resolve to one).
+  schemas: [ModelList]
+  fields: [id, object, provider, display_name, context_window, 'capabilities {streaming, tools, vision, reasoning}', 'pricing {input_per_million, output_per_million, currency, fee_percent}']
+  relationships:
+  - {belongs_to: Provider, via: provider}
+  - {has_many: ChatCompletionRequest, via: model}
+  - {has_many: Receipt, via: model}
+- name: Provider
+  description: Upstream LLM vendor (openai, anthropic, google, xai, deepseek, nvidia). Not a resource; a grouping value with a per-provider circuit breaker.
+  schemas: []
+- name: ChatCompletionRequest
+  description: OpenAI-shaped request — model (id, alias or profile), messages[], max_tokens, temperature, top_p, stream, tools[], tool_choice.
+  schemas: [ChatCompletionRequest, ChatMessage, ToolCall]
+  relationships:
+  - {has_many: ChatMessage, via: 'messages[]'}
+  - {belongs_to: Model, via: model}
+  - {has_one: PaymentRequired, via: 402 response when unpaid}
+  - {has_one: ChatCompletionResponse, via: 200 response when paid or free}
+- name: ChatMessage
+  description: role (system|user|assistant|tool), content (string, content parts, or null), name, tool_calls[], tool_call_id.
+  schemas: [ChatMessage, ToolCall]
+  relationships:
+  - {has_many: ToolCall, via: 'tool_calls[] (assistant turns)'}
+  - {belongs_to: ToolCall, via: tool_call_id (tool turns)}
+- name: ChatCompletionResponse
+  description: id, object, created, model, choices[]{index, message, finish_reason}, usage.
+  schemas: [ChatCompletionResponse]
+  relationships:
+  - {belongs_to: Model, via: model}
+  - {has_one: Receipt, via: X-Solvela-Receipt header (paid responses only)}
+- name: PaymentRequired
+  description: The x402 v2 challenge — resource{url,method}, accepts[] of PaymentAccept, cost_breakdown, error, extensions{bazaar}.
+  schemas: [PaymentRequired]
+  relationships:
+  - {has_many: PaymentAccept, via: 'accepts[]'}
+  - {has_one: CostBreakdown, via: cost_breakdown}
+- name: PaymentAccept
+  description: One payable option — scheme (exact|escrow), network (CAIP-2), amount (atomic USDC string), asset (USDC mint), pay_to, max_timeout_seconds, escrow_program_id (escrow only).
+  schemas: []
+  relationships:
+  - {belongs_to: PaymentRequired, via: 'accepts[]'}
+- name: Payment
+  description: The signed Solana transaction (exact), escrow deposit (escrow) or voucher (channel) that settles one request; carried in PAYMENT-SIGNATURE.
+  schemas: []
+  relationships:
+  - {belongs_to: Wallet, via: signer}
+  - {belongs_to: PaymentAccept, via: accepted}
+  - {has_one: Receipt, via: tx_signature}
+- name: Receipt
+  description: Client-facing evidence of a paid request — payer, scheme, transaction reference, amounts actually charged (atomic integers canonical, decimal strings derived).
+  schemas: [Receipt, ReceiptCostBreakdown, ReceiptVendorSettlement]
+  fields: [receipt_id, created_at, model, payment_scheme, tx_signature, payer_wallet, amount_paid_atomic, amount_paid_usdc, cost_breakdown, vendor]
+  relationships:
+  - {belongs_to: Wallet, via: payer_wallet}
+  - {belongs_to: Model, via: model (or a marketplace service id on the proxy path)}
+  - {has_one: ReceiptCostBreakdown, via: cost_breakdown ($ref)}
+  - {has_one: ReceiptVendorSettlement, via: vendor ($ref; marketplace services with a vendor_wallet only)}
+- name: EscrowAccount
+  description: PDA vault owned by the Anchor escrow program; deposit, claim (pays actual cost, refunds remainder, closes), refund (after expiry, by the agent).
+  schemas: []
+  relationships:
+  - {belongs_to: Wallet, via: agent_pubkey}
+  - {belongs_to: EscrowProgram, via: escrow_program_id}
+- name: Channel
+  description: Spend-down channel — one on-chain deposit, a session key, a strictly increasing cumulative voucher ledger; closed for an on-chain refund of the unspent balance. Documented, not in the OpenAPI.
+  schemas: []
+  relationships:
+  - {belongs_to: Wallet, via: funding wallet}
+  - {has_many: Voucher, via: channel_id}
+- name: Service
+  description: Marketplace tool proxied through the gateway with a flat per-request price (web-search, solana-price); may carry a vendor_wallet for direct-to-vendor settlement.
+  schemas: []
+  relationships:
+  - {has_many: Receipt, via: model = service id}
+- name: Organization / Team / EnterpriseApiKey
+  description: Enterprise hierarchy — org (label, slug, owner wallet), teams with hourly/daily/monthly budgets, member wallets with roles, API keys (hashed secret, solvela_k_ prefix, label, expiry). Documented; not in the OpenAPI.
+  schemas: []
+  relationships:
+  - {has_many: Wallet, via: member wallets}
+  - {has_many: EnterpriseApiKey, via: organisation}
+- name: A2A Task
+  description: JSON-RPC task record — states input-required, working, completed, failed, canceled; carries the PaymentRequired quote, the paid output as an artifact and x402.payment.receipts. Redis, 10-minute TTL.
+  schemas: []
+  relationships:
+  - {has_one: PaymentRequired, via: x402.payment.required metadata}
+  - {has_one: Receipt, via: x402.payment.receipts.receipt}
+rendering:
+  subway: null
+  note: No subway/ render in this repo.

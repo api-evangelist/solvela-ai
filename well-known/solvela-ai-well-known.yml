@@ -1,0 +1,155 @@
+generated: '2026-09-19'
+method: probed
+source: >-
+  Live GET probes of the named /.well-known/* path list on every host the record knows — the registrable domain
+  and www, the API host, the OpenAPI servers[] sibling host on fly.dev, and the docs/app subdomains — on
+  2026-09-19. Every row below is a request that was actually issued; every status is the one returned.
+summary:
+  hosts_probed: 6
+  documents_served: 2
+  hit_count: 2
+  path_echo_control: passed
+  note: >-
+    Solvela serves two well-known documents, both on the API host api.solvela.ai (and mirrored byte-for-byte on
+    the Fly.io sibling host): the A2A agent card at /.well-known/agent-card.json (also at the legacy
+    /.well-known/agent.json alias; captured and graded in a2a/) and an x402 discovery document at
+    /.well-known/x402 listing the payable resource. Everything else on the API host — RFC 9116 security.txt,
+    OIDC discovery, RFC 8414 OAuth metadata, RFC 9728 protected-resource metadata, RFC 9727 api-catalog,
+    ai-plugin.json, apis.json, mcp.json — returns a real 404 with an empty body, and a negative-control path
+    that cannot exist also 404s, so the two 200s are served documents and not a catch-all. The provider's own
+    SECURITY.md states that a security.txt "is served from api.solvela.ai"; it is not, as of this probe (404 on
+    both /.well-known/security.txt and /security.txt, on both API hosts). The registrable domain solvela.ai and
+    its docs. and app. subdomains answer HTTP 402 "DEPLOYMENT_DISABLED" from Vercel on every path, so no
+    well-known document is reachable there; www.solvela.ai has no DNS record. There is no remote MCP host: the
+    MCP server is a stdio npm package, so the RFC 9728 protected-resource probe on the MCP host is the API-host
+    row below (404).
+hosts:
+- host: api.solvela.ai
+  role: API (apis.yml baseURL, OpenAPI servers[0]) and A2A JSON-RPC host; the only host serving well-known documents
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 200
+    content_type: application/json
+    bytes: 1454
+    file: ../a2a/solvela-ai-agent-card.json
+    standard: A2A Agent Card (protocolVersion 0.3.0)
+    note: Saved verbatim under a2a/ and graded in a2a/solvela-ai-a2a.yml (conformant).
+  - path: /.well-known/agent.json
+    status: 200
+    content_type: application/json
+    bytes: 1454
+    file: ../a2a/solvela-ai-agent-card.json
+    note: Legacy pre-0.3 path kept by the provider as a backward-compatibility alias; byte-identical to the canonical document.
+  - path: /.well-known/x402
+    status: 200
+    content_type: application/json
+    bytes: 72
+    file: solvela-ai-x402.json
+    standard: x402 discovery document (x402scan convention; version 1, resources[])
+    note: '{"version":1,"resources":["https://api.solvela.ai/v1/chat/completions"]} — the provider''s changelog (2026-06-17) describes adding it so OpenAPI-first x402 crawlers index the gateway as payable and invocable.'
+  - path: /.well-known/security.txt
+    status: 404
+    note: Claimed in the repository's SECURITY.md; not served. Empty body, not an SPA shell.
+  - path: /security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+    note: No RFC 9728 metadata. There is no remote MCP resource server to describe; the MCP server is stdio-only.
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/apis.json
+    status: 404
+  - path: /apis.json
+    status: 404
+  - path: /.well-known/mcp.json
+    status: 404
+  - path: /.well-known/solvela-ai-negative-control-9c1f2a7e.json
+    status: 404
+    note: Negative control (a path that cannot exist). Empty body. path_echo_control passed.
+- host: solvela-gateway.fly.dev
+  role: OpenAPI servers[1] ("Direct Fly host") — the same gateway under the Fly.io platform domain
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 200
+    content_type: application/json
+    bytes: 1454
+    file: ../a2a/solvela-ai-agent-card.json
+    note: Byte-identical mirror of the API-host document; not a separate publication.
+  - path: /.well-known/agent.json
+    status: 200
+    content_type: application/json
+    bytes: 1454
+    file: ../a2a/solvela-ai-agent-card.json
+  - path: /.well-known/x402
+    status: 200
+    content_type: application/json
+    bytes: 72
+    file: solvela-ai-x402.json
+    note: Same document as the API host; the resources[] URL is https://api.solvela.ai/v1/chat/completions (the configured public URL), not the fly.dev host.
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/solvela-ai-negative-control-1b2c3d4e.json
+    status: 404
+    note: Negative control. Passed.
+- host: solvela.ai
+  role: Website (registrable domain; the provider.url in the agent card and info.contact.url in the OpenAPI)
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 402
+    content_type: text/plain
+    bytes: 78
+    note: 'Vercel "DEPLOYMENT_DISABLED" — "Payment required" text/plain body with x-vercel-error: DEPLOYMENT_DISABLED. The same response is returned for / and every path on this host. Not a served document.'
+  - path: /.well-known/agent.json
+    status: 402
+  - path: /.well-known/security.txt
+    status: 402
+  - path: /security.txt
+    status: 402
+  - path: /.well-known/openid-configuration
+    status: 402
+  - path: /.well-known/oauth-authorization-server
+    status: 402
+  - path: /.well-known/api-catalog
+    status: 402
+  - path: /.well-known/ai-plugin.json
+    status: 402
+- host: www.solvela.ai
+  role: www alias
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 0
+    note: No DNS A/CNAME record; the connection cannot be made.
+  - path: /.well-known/agent.json
+    status: 0
+- host: docs.solvela.ai
+  role: Documentation host named in the provider's README and SECURITY.md (CNAME cname.vercel-dns.com)
+  documents:
+  - path: /
+    status: 402
+    note: Vercel DEPLOYMENT_DISABLED. The documentation source is public at https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs.
+  - path: /.well-known/agent-card.json
+    status: 402
+- host: app.solvela.ai
+  role: Dashboard host named in SECURITY.md (CNAME cname.vercel-dns.com)
+  documents:
+  - path: /
+    status: 402
+    note: Vercel DEPLOYMENT_DISABLED.
+  - path: /.well-known/agent-card.json
+    status: 402

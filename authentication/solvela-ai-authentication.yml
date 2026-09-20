@@ -1,0 +1,94 @@
+generated: '2026-09-19'
+method: searched
+source: openapi/solvela-ai-openapi.json
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/authentication.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/x402.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/operations/security.mdx
+summary:
+  types:
+  - apiKey
+  - http
+  api_key_in:
+  - header
+  oauth2_flows: []
+  bearer: true
+  credential_classes: 4
+  headline: >-
+    No account and no signup for the public API: payment IS the authorization. A paid operation answers 402
+    with an x402 quote; the client signs a Solana USDC-SPL transaction (or an escrow deposit, or a spend-down
+    channel voucher) and resubmits with the signed payload in the PAYMENT-SIGNATURE header. Free ($0) models
+    need no header at all. Identity is the payer wallet (base58 pubkey) recovered from the signed transaction;
+    rate limits key on it. Two Bearer-token schemes exist outside the four-operation contract: organisation API
+    keys prefixed solvela_k_ for the enterprise org/team/budget routes, and an admin token for /metrics,
+    /v1/escrow/health and marketplace registration. Receipt ids and A2A task ids are bearer capabilities.
+    No OAuth 2, no OIDC, no discovery documents on any host.
+schemes:
+- name: x402Payment
+  type: apiKey
+  in: header
+  parameter: PAYMENT-SIGNATURE
+  standard: x402 v2
+  description: >-
+    x402 payment payload: JSON (raw or base64-encoded) of the form { x402_version, resource: {url, method},
+    accepted: <one entry from the 402 challenge's accepts[]>, payload: { transaction } | { deposit_tx, service_id,
+    agent_pubkey } }, where transaction / deposit_tx is a base64-encoded signed Solana versioned transaction.
+    Omit the header to receive the 402 challenge quoting the price. (Quoted from the securityScheme description.)
+  challenge:
+    status: 402
+    body: x402 PaymentRequired object (snake_case) at the top level
+    header: PAYMENT-REQUIRED — base64 of the canonical camelCase challenge
+    validity: max_timeout_seconds 300 (observed)
+    schemes_offered: [exact, escrow]
+    observed: '2026-09-19 on POST /v1/chat/completions, POST /v1/messages, POST /v1/search'
+  verification_pipeline: [50 KB header size limit, base64 or raw JSON decode, replay check (Redis SET NX EX 120 on the tx signature), VersionedTransaction deserialisation, TransferChecked discriminator, ATA derivation, amount >= quoted, recipient = gateway USDC ATA, mint = configured USDC]
+  payload_variants:
+  - {scheme: exact, payload: '{ transaction }', note: 'pre-signed USDC-SPL TransferChecked to pay_to for accepts[].amount'}
+  - {scheme: escrow, payload: '{ deposit_tx, service_id, agent_pubkey }', note: 'deposit to the Anchor escrow PDA (program 9neDHouXgEgHZDde5SpmqqEZ9Uv35hFcjtFEPxomtHLU); PDA seeds ["escrow", agent_pubkey, service_id]'}
+  - {scheme: channel (voucher), payload: 'signed cumulative voucher (domain solvela-channel-voucher-v1) binding channel id, new cumulative, SHA-256 of the request bytes and an expiry slot; signed by the channel session key', note: 'not advertised in accepts[]; opened via POST /v1/channel/open, closed via POST /v1/channel/close'}
+  used_by: [createChatCompletion, 'POST /v1/messages', 'POST /v1/search', 'POST /v1/solana/price', 'POST /a2a message/send (as x402.payment.payload metadata)']
+  not_required_for: [listModels, getReceipt, health, 'createChatCompletion when the quoted cost is exactly 0 atomic USDC (free models)']
+  sources:
+  - openapi/solvela-ai-openapi.json
+- name: EnterpriseApiKey
+  type: http
+  scheme: bearer
+  parameter: 'Authorization: Bearer solvela_k_...'
+  key_prefix: solvela_k_
+  description: >-
+    Organisation-scoped API keys for enterprise accounts (org hierarchy, team budgets, audit logs, usage
+    analytics). Keys carry full organisational permissions; the secret is shown once at creation and stored
+    hashed. Rate limiting for key auth is per source IP rather than per wallet (docs comparison table).
+  used_by: ['/v1/orgs/... (undeclared in the OpenAPI; live GET /v1/orgs returned 401 "Valid admin token or API key required")', 'createChatCompletion (docs example shows Authorization: Bearer solvela_k_ on chat)']
+  issuance: enterprise account; no self-serve signup documented
+  sources:
+  - https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/api/authentication.mdx
+- name: AdminToken
+  type: http
+  scheme: bearer
+  parameter: 'Authorization: Bearer <SOLVELA_ADMIN_TOKEN>'
+  audience: operator
+  description: Constant-time-compared operator token gating /metrics, /v1/escrow/health, /v1/admin/stats and POST /v1/services/register. When unset, /metrics is hidden (404).
+  observed: 'GET /metrics -> 401 "unauthorized"; GET /v1/admin/stats -> 401 {"error":"unauthorized"}'
+  sources:
+  - https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/operations/security.mdx
+- name: BearerCapabilities
+  type: capability
+  description: >-
+    Unguessable identifiers that are themselves the credential: the UUIDv4 receipt id returned in the
+    X-Solvela-Receipt header (GET /v1/receipts/{receipt_id}; unknown and malformed ids return identical 404s,
+    rate-capped per IP) and the A2A task id (tasks/get for ~10 minutes after the last state change). The
+    provider documents both as bearer capabilities to be kept secret.
+  sources:
+  - openapi/solvela-ai-openapi.json
+  - https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/a2a.mdx
+wallet_identity:
+  format: Solana base58 public key
+  derived_from: the signer of the payment transaction (or the funding wallet of a channel)
+  used_for: [rate limiting, spend ledger, receipts (payer_wallet), enterprise org membership]
+  pii: none — the provider's regulatory-position document states no names, emails or identifiers are collected
+discovery_documents:
+  probed: '2026-09-19 on api.solvela.ai and solvela-gateway.fly.dev'
+  openid_configuration: 404
+  oauth_authorization_server: 404
+  oauth_protected_resource: 404

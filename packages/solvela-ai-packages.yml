@@ -1,0 +1,226 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  Registry metadata endpoints queried 2026-09-19 — registry.npmjs.org/<pkg>, pypi.org/pypi/<pkg>/json,
+  crates.io/api/v1/crates/<pkg>, proxy.golang.org/<module>/@latest — cross-checked against the provider's SDK
+  index (dashboard/content/docs/sdks/index.mdx) and the monorepo README. version and published come from the
+  registry, never from prose.
+docs: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/sdks/index.mdx
+package_count: 15
+official_count: 15
+summary: >-
+  All first-party. Four language SDKs (TypeScript, Python, Go, Rust) plus an MCP server, a Claude Code
+  sidecar, shared signing primitives and the operator CLI, all developed in the public monorepo
+  github.com/solvela-ai/solvela (the standalone solvela-ts / solvela-python / solvela-go repos were consolidated
+  there 2026-05-12 and the Rust client 2026-05-16; the old repos remain as redirect stubs). The newest release
+  on any registry is 2026-07-08 (TypeScript SDK 0.4.0, Python SDK 0.4.0, Go v0.5.0, MCP server 0.1.1); the
+  gateway repo itself was last pushed 2026-09-18, so the SDKs trail the gateway by about ten weeks but still
+  speak the live wire (the 402 observed today is x402_version 2, which 0.4.x parses; the provider's own note
+  says releases before 0.2.2 cannot complete a payment). Libraries and SDKs are Apache-2.0; three older
+  crates (solvela-cli, solvela-x402, solvela-router) still carry MIT metadata from before the 2026-05-31
+  relicense, as the provider's license page says they would until their next release.
+packages:
+- language: typescript
+  registry: npm
+  name: '@solvela/sdk'
+  url: https://www.npmjs.com/package/@solvela/sdk
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/typescript
+  install: npm install @solvela/sdk@^0.4.0
+  official: true
+  version: 0.4.0
+  published: '2026-07-08'
+  license: Apache-2.0
+  note: Wallet management, x402 payment signing, escrow deposits, response caching, session tracking.
+- language: typescript
+  registry: npm
+  name: '@solvela/mcp-server'
+  url: https://www.npmjs.com/package/@solvela/mcp-server
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/mcp
+  install: npx -y @solvela/mcp-server
+  official: true
+  version: 0.1.1
+  published: '2026-07-08'
+  license: Apache-2.0
+  kind: mcp-server
+  bin: solvela-mcp
+  note: Local stdio MCP server; see mcp/solvela-ai-mcp.yml.
+- language: typescript
+  registry: npm
+  name: '@solvela/signer-core'
+  url: https://www.npmjs.com/package/@solvela/signer-core
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/signer-core
+  install: npm install @solvela/signer-core
+  official: true
+  version: 0.2.0
+  published: '2026-07-06'
+  license: Apache-2.0
+  note: Shared x402 primitives — 402 parsing, signing, scheme filtering, spend-down-channel ChannelTracker, stub-header guards, error redaction.
+- language: typescript
+  registry: npm
+  name: '@solvela/dropin'
+  url: https://www.npmjs.com/package/@solvela/dropin
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/dropin
+  install: npx solvela-dropin
+  official: true
+  version: 0.1.0
+  published: '2026-07-06'
+  license: Apache-2.0
+  bin: solvela-dropin
+  note: Claude Code drop-in sidecar — point ANTHROPIC_BASE_URL at localhost; it signs a spend-down-channel voucher per request and relays the gateway's native /v1/messages response.
+- language: python
+  registry: pypi
+  name: solvela-sdk
+  url: https://pypi.org/project/solvela-sdk/
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/python
+  install: pip install "solvela-sdk>=0.4.0"
+  official: true
+  version: 0.4.0
+  published: '2026-07-08'
+  license: null
+  note: Async-only client. PyPI metadata carries no license field; the source tree is Apache-2.0 per the provider's licensing table (the provider notes older PyPI releases still carry MIT metadata).
+- language: go
+  registry: go
+  name: github.com/solvela-ai/solvela/sdks/go
+  url: https://pkg.go.dev/github.com/solvela-ai/solvela/sdks/go
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/go
+  install: go get github.com/solvela-ai/solvela/sdks/go
+  official: true
+  version: v0.5.0
+  published: '2026-07-08'
+  license: Apache-2.0
+  note: Built-in KeypairSigner covers the escrow scheme; the exact scheme needs a custom Signer (provider's SDK table).
+- language: go
+  registry: go
+  name: github.com/solvela-ai/solvela-go
+  url: https://pkg.go.dev/github.com/solvela-ai/solvela-go
+  source: https://github.com/solvela-ai/solvela-go
+  install: go get github.com/solvela-ai/solvela-go
+  official: true
+  version: v0.1.0
+  published: '2026-04-28'
+  license: MIT
+  status: superseded
+  note: The pre-consolidation standalone module; superseded by github.com/solvela-ai/solvela/sdks/go on 2026-05-12. Listed so the older import path is recognisable, not recommended.
+- language: rust
+  registry: crates.io
+  name: solvela-client
+  url: https://crates.io/crates/solvela-client
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/rust
+  install: cargo add solvela-client solvela-protocol
+  official: true
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  note: Library — Wallet, SolvelaClient, x402 payment signing, payload assembly.
+- language: rust
+  registry: crates.io
+  name: solvela-protocol
+  url: https://crates.io/crates/solvela-protocol
+  source: https://github.com/solvela-ai/solvela/tree/main/crates/protocol
+  install: cargo add solvela-protocol
+  official: true
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  note: Shared wire-format types (x402 payment protocol + OpenAI-compatible chat types).
+- language: rust
+  registry: crates.io
+  name: solvela-client-cli
+  url: https://crates.io/crates/solvela-client-cli
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/rust
+  install: cargo install solvela-client-cli
+  official: true
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  kind: cli
+  bin: solvela-client
+  note: Agent-side payer CLI (wallet, chat, models, doctor). See cli/solvela-ai-cli.yml.
+- language: rust
+  registry: crates.io
+  name: solvela-client-proxy
+  url: https://crates.io/crates/solvela-client-proxy
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/rust
+  install: cargo install solvela-client-proxy
+  official: true
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  kind: cli
+  note: Localhost reverse proxy that signs x402 payments for unmodified OpenAI-format clients.
+- language: rust
+  registry: crates.io
+  name: solvela-client-cli-args
+  url: https://crates.io/crates/solvela-client-cli-args
+  source: https://github.com/solvela-ai/solvela/tree/main/sdks/rust
+  install: cargo add solvela-client-cli-args
+  official: true
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  note: Shared CLI argument structs and wallet loading used by the two Rust binaries.
+- language: rust
+  registry: crates.io
+  name: solvela-escrow-tx
+  url: https://crates.io/crates/solvela-escrow-tx
+  source: https://github.com/solvela-ai/solvela/tree/main/crates/escrow-tx
+  install: cargo add solvela-escrow-tx
+  official: true
+  version: 0.2.0
+  published: '2026-06-03'
+  license: Apache-2.0
+  note: No-dependency escrow deposit transaction builder (PDA/ATA derivation, Anchor discriminator, signed legacy transaction).
+- language: rust
+  registry: crates.io
+  name: solvela-cli
+  url: https://crates.io/crates/solvela-cli
+  source: https://github.com/solvela-ai/solvela/tree/main/crates/cli
+  install: cargo install solvela-cli
+  official: true
+  version: 0.2.0
+  published: '2026-05-14'
+  license: MIT
+  kind: cli
+  bin: solvela
+  note: Operator/developer CLI — wallet, chat, models, health, stats, doctor, mcp install. See cli/solvela-ai-cli.yml.
+- language: rust
+  registry: crates.io
+  name: solvela-x402
+  url: https://crates.io/crates/solvela-x402
+  source: https://github.com/solvela-ai/solvela/tree/main/crates/x402
+  install: cargo add solvela-x402
+  official: true
+  version: 0.2.0
+  published: '2026-05-14'
+  license: MIT
+  note: Reference x402 implementation for Solana — verification, escrow integration, fee-payer pool, nonce pool. Powers the gateway; a server-side crate.
+- language: rust
+  registry: crates.io
+  name: solvela-router
+  url: https://crates.io/crates/solvela-router
+  source: https://github.com/solvela-ai/solvela/tree/main/crates/router
+  install: cargo add solvela-router
+  official: true
+  version: 0.2.0
+  published: '2026-05-14'
+  license: MIT
+  note: 15-dimension request scorer, routing profiles and model registry; a server-side crate.
+in_repo_not_published:
+- name: '@solvela/cli'
+  registry: npm
+  version: null
+  note: 'sdks/cli-npm/package.json is marked private at 1.0.0-draft — an npm shim that would bundle the Rust binary. registry.npmjs.org/@solvela/cli returned 404 on 2026-09-19.'
+- name: '@solvela/ai-sdk-provider'
+  registry: npm
+  version: null
+  note: Vercel AI SDK provider at sdks/ai-sdk-provider; not on npm (404).
+- name: '@solvela/openclaw-provider'
+  registry: npm
+  version: null
+  note: OpenClaw provider plugin at sdks/openclaw-provider; not on npm (404).
+searched:
+- {registry: npm, query: 'https://registry.npmjs.org/-/v1/search?text=solvela', result: 4 packages, all under the @solvela scope}
+- {registry: pypi, query: 'https://pypi.org/pypi/solvela/json', status: 404, note: the package is named solvela-sdk}
+- {registry: crates.io, query: 'https://crates.io/api/v1/crates?q=solvela', result: 9 crates, all with repository github.com/solvela-ai/solvela}
+- {registry: go, query: 'https://proxy.golang.org/github.com/solvela-ai/solvela/sdks/go/@v/list', result: 'v0.1.0 v0.2.0 v0.3.0 v0.4.0 v0.5.0'}
+- {registry: github, query: 'https://api.github.com/search/repositories?q=solvela', result: 'org solvela-ai — solvela (monorepo), solvela-client, solvela-python, solvela-ts, solvela-go, .github, plus forks agentshield, pay-skills, openclaw'}

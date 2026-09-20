@@ -1,0 +1,80 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/solvela-ai/solvela/blob/main/crates/cli/README.md
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/crates/cli/README.md
+- https://github.com/solvela-ai/solvela/blob/main/sdks/rust/README.md
+- https://github.com/solvela-ai/solvela/blob/main/sdks/mcp/README.md
+- https://github.com/solvela-ai/solvela#cli
+summary: >-
+  Two first-party Rust CLIs, both on crates.io, with distinct jobs the provider spells out: `solvela` (crate
+  solvela-cli) is the operator/developer CLI for running and inspecting a gateway plus the one-command MCP host
+  installer; `solvela-client` (crate solvela-client-cli) is the agent-side PAYER CLI that holds a wallet and
+  pays gateways from a terminal, with a sibling `solvela-client-proxy` binary that lets unmodified OpenAI-format
+  clients pay transparently through localhost. An npm shim (@solvela/cli) exists in the repository as a private
+  1.0.0-draft and is not published. Command surfaces below are read from the READMEs and the crates/cli/src/commands
+  module list; they were not executed.
+clis:
+- name: solvela
+  crate: solvela-cli
+  version: 0.2.0
+  published: '2026-05-14'
+  license: MIT
+  audience: gateway operators and developers
+  install:
+  - cargo install solvela-cli
+  configuration:
+  - 'SOLVELA_API_URL (default https://api.solvela.ai)'
+  - 'SOLANA_WALLET_KEY — required for any paid command; the installer never writes it to disk (use ~/.solvela/env chmod 0600)'
+  - 'SOLANA_RPC_URL — public endpoint fine for a smoke test; Helius/QuickNode/Triton recommended for real use'
+  commands:
+  - group: wallet
+    commands: ['solvela wallet init — generate a Solana keypair (fund the printed address with USDC and a little SOL)']
+  - group: models
+    commands: ['solvela models — list models and per-token pricing']
+  - group: chat
+    commands: ['solvela chat --model auto "hello" — chat through the smart router, paying via x402']
+  - group: diagnostics
+    commands: ['solvela health — gateway health check', 'solvela stats — wallet spend statistics', 'solvela doctor — check config and gateway reachability']
+  - group: mcp
+    commands:
+    - 'solvela mcp install --host=claude-code|cursor|claude-desktop|openclaw — write the host config that runs npx -y @solvela/mcp-server'
+    - 'solvela mcp uninstall --host=<host>'
+    flags: ['--scope=user|project', '--wallet=<pubkey>', '--budget=<usdc>', '--signing-mode=auto|escrow|direct|off', '--dry-run', '--diff', '--force']
+  - group: other (from crates/cli/src/commands)
+    commands: ['solvela recover', 'solvela loadtest (config, dispatcher, payment, prometheus report)', 'solvela solana-tx']
+    note: Present as command modules in the source tree; their flags are not documented in the README and are not asserted here.
+  key_flows:
+  - 'First chat: wallet init -> fund -> chat --model auto'
+  - 'MCP setup in one command: solvela mcp install --host=claude-code'
+- name: solvela-client
+  crate: solvela-client-cli
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  audience: agents and people paying a Solvela gateway from a terminal
+  install:
+  - cargo install solvela-client-cli
+  commands:
+  - group: payer
+    commands: ['solvela-client wallet', 'solvela-client chat', 'solvela-client models', 'solvela-client doctor']
+  note: '"The solvela-client binary here is the agent-side payer — it holds a wallet and pays gateways" (sdks/rust/README.md).'
+- name: solvela-client-proxy
+  crate: solvela-client-proxy
+  version: 0.4.0
+  published: '2026-06-17'
+  license: Apache-2.0
+  audience: existing OpenAI-format clients that should pay without code changes
+  install:
+  - cargo install solvela-client-proxy
+  description: Localhost reverse proxy with transparent x402 USDC-SPL payment handling — point an OpenAI client's base URL at it.
+related_binaries:
+- name: solvela-mcp
+  package: '@solvela/mcp-server (npm)'
+  note: The MCP server binary; see mcp/solvela-ai-mcp.yml.
+- name: solvela-dropin
+  package: '@solvela/dropin (npm)'
+  note: Claude Code sidecar that signs spend-down-channel vouchers; not a general CLI.
+unpublished:
+- name: '@solvela/cli'
+  note: sdks/cli-npm — private 1.0.0-draft npm shim bundling the Rust binary per platform; registry.npmjs.org returned 404 on 2026-09-19.

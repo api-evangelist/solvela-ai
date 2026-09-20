@@ -1,0 +1,29 @@
+generated: '2026-09-19'
+method: generated
+source: >-
+  openapi/solvela-ai-openapi.json (all operationIds verified against the spec; two escrow routes are named by
+  path because the provider documents them without declaring them in the contract) plus the provider's x402,
+  escrow, free-tier, A2A, errors and rate-limits documentation and the 402 challenge, agent card and JSON-RPC
+  responses observed live on 2026-09-19. Solvela publishes no agent skills or llms.txt of its own: the AGENTS.md
+  files throughout its repository are contributor instructions for working on the codebase, not operating
+  instructions for calling the API, and were not copied.
+skills:
+- file: solvela-ai-pay-per-call-chat.md
+  name: solvela-ai-pay-per-call-chat
+  method: generated
+  description: Get a chat completion by paying the exact quoted USDC on Solana through the x402 402-then-retry handshake, then keep the receipt — with the quote, replay, retry and rate-limit rules the contract states.
+  operations: 3
+  operation_ids: [listModels, createChatCompletion, getReceipt]
+- file: solvela-ai-escrow-paid-request.md
+  name: solvela-ai-escrow-paid-request
+  method: generated
+  description: Pay through the on-chain escrow scheme so the gateway claims only actual cost, the remainder returns automatically, and an undelivered request is refundable after the stated 300 s window.
+  operations: 2
+  operation_ids: [createChatCompletion, getReceipt]
+  routes: ['GET /v1/escrow/config', 'POST /v1/escrow/settle']
+- file: solvela-ai-free-tier-and-a2a.md
+  name: solvela-ai-free-tier-and-a2a
+  method: generated
+  description: Use the zero-cost model tier without a wallet, rehearse the 402 quote, and discover and quote Solvela as an A2A agent over JSON-RPC.
+  operations: 3
+  operation_ids: [health, listModels, createChatCompletion]

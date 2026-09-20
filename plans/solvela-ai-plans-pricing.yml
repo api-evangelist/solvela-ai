@@ -1,0 +1,605 @@
+generated: '2026-09-19'
+method: probed
+source: https://api.solvela.ai/v1/models
+sources:
+- url: https://api.solvela.ai/v1/models
+  status: 200
+  fetched: '2026-09-19'
+- url: https://api.solvela.ai/pricing
+  status: 200
+  fetched: '2026-09-19'
+- url: https://api.solvela.ai/v1/services
+  status: 200
+  fetched: '2026-09-19'
+- url: https://api.solvela.ai/v1/chat/completions
+  method: POST
+  status: 402
+  fetched: '2026-09-19'
+  note: unpaid request; the 402 challenge quotes the price
+- url: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/pricing.mdx
+  note: pricing documentation source (the hosted docs site returns 402 DEPLOYMENT_DISABLED)
+- url: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/enterprise/commercial-license.mdx
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/pricing.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/free-tier.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/enterprise/commercial-license.mdx
+plan_count: 27
+currency: USDC
+model: pay-per-request in USDC-SPL on Solana via x402; no account, no subscription, no minimum, no invoice; price per request
+  = provider list price per token x tokens, quoted in the 402 challenge before anything runs
+summary: 'Solvela publishes no tiers. Every paid request is priced per token at the upstream provider''s list price and settled
+  on-chain in USDC at request time; the hosted gateway at api.solvela.ai runs with the platform fee suspended (fee_percent
+  0 on /pricing, /v1/models and the live 402 — the software''s default is 5%, configurable on self-hosted gateways). GET /v1/models
+  returned 44 models across 6 providers (anthropic 6, deepseek 3, google 4, nvidia 17, openai 10, xai 4): 27 paid and 17 free
+  ($0/$0, served without any payment or wallet, rate-limited per IP and globally — see rate-limits/). Two marketplace tools
+  are flat-priced per call. The 402 challenge quotes against the model''s full completion-token ceiling, so the quoted amount
+  is an upper bound; escrow and channel schemes settle the actual cost and refund the remainder, the exact scheme charges
+  the quote. Enterprise: API-key organisations with team budgets are offered, and self-hosting the gateway needs a commercial
+  license above USD 1,000,000 revenue or for SaaS re-hosting (BUSL-1.1); no enterprise price is published.'
+platform:
+  name: Solvela
+  chain: solana
+  token: USDC-SPL
+  usdc_mint: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+  fee_percent: 0
+  fee_description: 0% platform fee is added on top of provider cost
+  settlement: Solana USDC-SPL TransferChecked (pre-signed versioned tx)
+  min_tx_cost_sol: 5.0e-06
+  network_caip2: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+  pay_to: 9QGtTUpvLmhggDuBciAeE67MmhECVFYdFLD7xKD4RSno
+  escrow_program_id: 9neDHouXgEgHZDde5SpmqqEZ9Uv35hFcjtFEPxomtHLU
+observed_quote:
+  request: POST /v1/chat/completions {"model":"anthropic/claude-sonnet-4-5-20250929","messages":[{"role":"user","content":"hi"}]}
+    with no PAYMENT-SIGNATURE
+  http_status: 402
+  amount_atomic: '122883'
+  total_usdc: '0.122883'
+  provider_cost_usdc: '0.122883'
+  platform_fee_usdc: '0.000000'
+  fee_percent: 0
+  schemes_offered:
+  - exact
+  - escrow
+  max_timeout_seconds: 300
+  note: 'A one-word prompt is quoted at the model''s full output ceiling (the docs: "quoting against the model''s full completion-token
+    ceiling ... so the quote and the settlement match by construction"). Set max_tokens to lower the quote.'
+free_tier:
+  plan_count: 17
+  price: 0
+  currency: USDC
+  payment_required: false
+  wallet_required: false
+  models:
+  - google/gemini-3.1-flash-lite
+  - nvidia/deepseek-ai/deepseek-r1
+  - nvidia/meta/llama-3.3-70b-instruct
+  - nvidia/meta/llama-4-maverick-17b-128e-instruct
+  - nvidia/meta/llama-4-scout-17b-16e-instruct
+  - nvidia/minimaxai/minimax-m2.7
+  - nvidia/minimaxai/minimax-m3
+  - nvidia/mistralai/mistral-large-3-675b-instruct-2512
+  - nvidia/nvidia/llama-3.1-nemotron-nano-8b-v1
+  - nvidia/nvidia/llama-3.1-nemotron-ultra-253b-v1
+  - nvidia/nvidia/llama-3.3-nemotron-super-49b-v1
+  - nvidia/nvidia/nemotron-3-nano-30b-a3b
+  - nvidia/nvidia/nemotron-3-super-120b-a12b
+  - nvidia/nvidia/nemotron-3-ultra-550b-a55b
+  - nvidia/nvidia/nemotron-mini-4b-instruct
+  - nvidia/qwen/qwen3-coder-480b-a35b-instruct
+  - openai/gpt-oss-120b
+  routing_profile: free (aliases oss, open) -> NVIDIA NIM Nemotron models tiered by complexity; google/gemini-3.1-flash-lite
+    as fallback
+  limits:
+  - 5 requests / 60 s per client IP
+  - 12 requests / 60 s across all free clients (global)
+  - 2 requests / 60 s for clients with no identifiable peer IP
+  data_use_notice: 'README: free-tier models are served via the upstream providers'' free API tiers, "whose terms may permit
+    the provider to use submitted prompts and generated responses to improve their products (and human reviewers may process
+    them) — do not send sensitive data through the free tier."'
+marketplace:
+- id: solana-price
+  name: Solana Price Data
+  endpoint: /v1/solana/price
+  price_per_request_usdc: 0.001
+  pricing: $0.001/query + platform fee (see the 402 quote)
+  category: data
+- id: web-search
+  name: Web Search
+  endpoint: /v1/search
+  price_per_request_usdc: 0.01
+  pricing: $0.010/query + platform fee (see the 402 quote)
+  category: search
+payment_schemes:
+- scheme: exact
+  description: Pre-signed USDC-SPL TransferChecked for the quoted amount; one on-chain transaction per request; charged the
+    quote.
+- scheme: escrow
+  description: Deposit to a PDA vault of the Anchor escrow program; gateway claims the actual cost after delivery and the
+    remainder refunds in the same transaction; if unclaimed within max_timeout_seconds the agent reclaims the deposit on-chain.
+- scheme: channel (spend-down voucher)
+  description: 'Fund once on-chain, sign a cumulative voucher per request, close to refund the unspent balance; not advertised
+    in accepts[]. Hosted caps per the provider''s feature-state page: 100 USDC max deposit, 500 USDC/day refund cap.'
+  advertised_in_402: false
+enterprise:
+  api_keys: Bearer keys prefixed solvela_k_, scoped to an organisation; org/team hierarchy, hourly/daily/monthly team budgets,
+    audit logs, usage analytics
+  price: null
+  contact: partnerships@solvela.ai
+  self_hosting_license: 'Gateway is BUSL-1.1 (MIT on 2030-05-02): free for non-production, internal first-party production
+    and commercial use under USD 1,000,000 annual revenue derived from the gateway; a commercial license is required to offer
+    it as a hosted/managed service or above that revenue. Libraries, SDKs, CLI and the escrow program are Apache-2.0.'
+plans:
+- id: anthropic/claude-haiku-4-5-20251001
+  name: Claude Haiku 4.5
+  provider: anthropic
+  type: usage-based
+  price:
+    input_per_million_tokens: 1.0
+    output_per_million_tokens: 5.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+- id: anthropic/claude-opus-4-6
+  name: Claude Opus 4.6
+  provider: anthropic
+  type: usage-based
+  price:
+    input_per_million_tokens: 5.0
+    output_per_million_tokens: 25.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - vision
+    - reasoning
+- id: anthropic/claude-opus-4-7
+  name: Claude Opus 4.7
+  provider: anthropic
+  type: usage-based
+  price:
+    input_per_million_tokens: 5.0
+    output_per_million_tokens: 25.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - vision
+    - reasoning
+- id: anthropic/claude-opus-4-8
+  name: Claude Opus 4.8
+  provider: anthropic
+  type: usage-based
+  price:
+    input_per_million_tokens: 5.0
+    output_per_million_tokens: 25.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - vision
+    - reasoning
+- id: anthropic/claude-sonnet-4-5-20250929
+  name: Claude Sonnet 4.5
+  provider: anthropic
+  type: usage-based
+  price:
+    input_per_million_tokens: 3.0
+    output_per_million_tokens: 15.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - vision
+- id: anthropic/claude-sonnet-4-6
+  name: Claude Sonnet 4.6
+  provider: anthropic
+  type: usage-based
+  price:
+    input_per_million_tokens: 3.0
+    output_per_million_tokens: 15.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: deepseek/deepseek-chat
+  name: DeepSeek V3.2 Chat
+  provider: deepseek
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.28
+    output_per_million_tokens: 0.42
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 128000
+    capabilities:
+    - streaming
+- id: deepseek/deepseek-coder
+  name: DeepSeek Coder V3
+  provider: deepseek
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.28
+    output_per_million_tokens: 0.42
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 128000
+    capabilities:
+    - streaming
+    - tools
+- id: deepseek/deepseek-reasoner
+  name: DeepSeek V3.2 Reasoner
+  provider: deepseek
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.28
+    output_per_million_tokens: 0.42
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 128000
+    capabilities:
+    - streaming
+    - reasoning
+- id: google/gemini-2.5-flash
+  name: Gemini 2.5 Flash
+  provider: google
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.3
+    output_per_million_tokens: 2.5
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 1000000
+    capabilities:
+    - streaming
+- id: google/gemini-2.5-flash-lite
+  name: Gemini 2.5 Flash Lite
+  provider: google
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.1
+    output_per_million_tokens: 0.4
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 1000000
+    capabilities:
+    - streaming
+- id: google/gemini-3.1-pro
+  name: Gemini 3.1 Pro
+  provider: google
+  type: usage-based
+  price:
+    input_per_million_tokens: 2.0
+    output_per_million_tokens: 12.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 1000000
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: nvidia/nvidia/llama-3.3-nemotron-super-49b-v1.5
+  name: Llama 3.3 Nemotron Super 49B v1.5
+  provider: nvidia
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.1
+    output_per_million_tokens: 0.4
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 131072
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: nvidia/nvidia/nvidia-nemotron-nano-9b-v2
+  name: NVIDIA Nemotron Nano 9B v2
+  provider: nvidia
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.04
+    output_per_million_tokens: 0.16
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 131072
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: openai/gpt-4.1
+  name: GPT-4.1
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 2.0
+    output_per_million_tokens: 8.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 1047576
+    capabilities:
+    - streaming
+    - tools
+    - vision
+- id: openai/gpt-4.1-mini
+  name: GPT-4.1 Mini
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.4
+    output_per_million_tokens: 1.6
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 1047576
+    capabilities:
+    - streaming
+    - tools
+    - vision
+- id: openai/gpt-4.1-nano
+  name: GPT-4.1 Nano
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.1
+    output_per_million_tokens: 0.4
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 1047576
+    capabilities:
+    - streaming
+    - tools
+- id: openai/gpt-4o
+  name: GPT-4o
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 2.5
+    output_per_million_tokens: 10.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 128000
+    capabilities:
+    - streaming
+    - tools
+    - vision
+- id: openai/gpt-4o-mini
+  name: GPT-4o Mini
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.15
+    output_per_million_tokens: 0.6
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 128000
+    capabilities:
+    - streaming
+    - tools
+- id: openai/gpt-5.2
+  name: GPT-5.2
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 1.75
+    output_per_million_tokens: 14.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 400000
+    capabilities:
+    - streaming
+    - tools
+    - vision
+    - reasoning
+- id: openai/o3
+  name: o3
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 2.0
+    output_per_million_tokens: 8.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - reasoning
+- id: openai/o3-mini
+  name: o3 Mini
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 1.1
+    output_per_million_tokens: 4.4
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: openai/o4-mini
+  name: o4 Mini
+  provider: openai
+  type: usage-based
+  price:
+    input_per_million_tokens: 1.1
+    output_per_million_tokens: 4.4
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 200000
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: xai/grok-3
+  name: Grok 3
+  provider: xai
+  type: usage-based
+  price:
+    input_per_million_tokens: 3.0
+    output_per_million_tokens: 15.0
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 131072
+    capabilities:
+    - streaming
+    - tools
+    - vision
+- id: xai/grok-3-mini
+  name: Grok 3 Mini
+  provider: xai
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.3
+    output_per_million_tokens: 0.5
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 131072
+    capabilities:
+    - streaming
+    - tools
+    - reasoning
+- id: xai/grok-4-fast-reasoning
+  name: Grok 4 Fast (Reasoning)
+  provider: xai
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.2
+    output_per_million_tokens: 0.5
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 2000000
+    capabilities:
+    - streaming
+    - reasoning
+- id: xai/grok-code-fast-1
+  name: Grok Code Fast
+  provider: xai
+  type: usage-based
+  price:
+    input_per_million_tokens: 0.2
+    output_per_million_tokens: 1.5
+    currency: USDC
+    platform_fee_percent: 0
+  billing_period: per request, settled on-chain at request time
+  included_quota: null
+  overage: null
+  limits:
+    context_window: 256000
+    capabilities:
+    - streaming

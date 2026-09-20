@@ -1,0 +1,55 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/free-tier.mdx
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/free-tier.mdx
+- https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/x402.mdx
+- https://github.com/solvela-ai/solvela/blob/main/sdks/mcp/README.md
+- https://github.com/solvela-ai/solvela/blob/main/docs/product/feature-state.md
+probed:
+- {url: 'https://api.solvela.ai/v1/models', status: 200, fetched: '2026-09-19', note: '44 models, 17 of them priced 0/0'}
+- {url: 'https://api.solvela.ai/v1/chat/completions', method: POST, status: 402, fetched: '2026-09-19', note: 'paid model, no payment header — the quote came back and nothing ran'}
+summary: >-
+  Solvela has no separate sandbox host, no test-mode keys and no magic test values; production is the only
+  environment and the wallet is the only credential. What it offers instead are three real rehearsal paths:
+  (1) the FREE TIER — seventeen $0 models (fifteen NVIDIA NIM Nemotron models plus google/gemini-3.1-flash-lite and openai/gpt-oss-120b) served with no wallet, no USDC and no payment header, rate-limited per IP,
+  which exercises the full request/response contract at zero cost; (2) the UNPAID REQUEST as a dry run — any
+  paid call sent without PAYMENT-SIGNATURE returns the exact price quote (402) and executes nothing, so an agent
+  can see what a call would cost before paying; (3) client-side `--dry-run` and `--diff` flags on the MCP
+  installer. The provider proves escrow and channel flows on Solana devnet internally (feature-state page), but
+  no public devnet gateway is documented, so devnet is not a sandbox a third party can use here.
+test_vs_live:
+  separate_environment: false
+  key_prefixes: not applicable — no API keys on the public path; enterprise keys are prefixed solvela_k_ with no test variant documented
+  network: Solana mainnet only (solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp); no devnet endpoint published
+  note: One host, one network, real money on every paid call.
+free_tier:
+  cost: 0 USDC
+  wallet_required: false
+  payment_header_required: false
+  how: 'model: "free" (aliases oss, open) or any zero-priced model id, e.g. google/gemini-3.1-flash-lite, openai/gpt-oss-120b, nvidia/nvidia/llama-3.1-nemotron-nano-8b-v1'
+  example: 'curl -s https://api.solvela.ai/v1/chat/completions -H "Content-Type: application/json" -d ''{"model":"free","messages":[{"role":"user","content":"What is x402?"}]}'''
+  rule: A request is free iff its computed cost is exactly 0 atomic USDC; a payment header sent with a free model is ignored.
+  limits: [5 requests / 60 s per IP, 12 requests / 60 s globally across all free clients]
+  caveat: Upstream free tiers may use prompts to improve their products — the provider says not to send sensitive data through it.
+dry_run:
+  mechanism: send the paid request without PAYMENT-SIGNATURE
+  returns: 'HTTP 402 with cost_breakdown {provider_cost, platform_fee, total, currency, fee_percent} and accepts[] — the exact amount, recipient, asset and validity window — plus, on /v1/chat/completions, an extensions.bazaar block with the input schema and an output example'
+  executes: nothing — no model call, no charge
+  observed: '2026-09-19: a one-word prompt to anthropic/claude-sonnet-4-5-20250929 was quoted at 0.122883 USDC (the full completion-token ceiling); set max_tokens to see a lower quote'
+  cost: free (counts against the 60/min per-client rate limit)
+client_tooling:
+  - 'solvela mcp install --host=<host> --dry-run  — print the MCP host config without writing it'
+  - 'solvela mcp install --host=<host> --diff     — show what would change in an existing config'
+  - 'solvela doctor                               — check config and gateway reachability without paying'
+  - 'SOLVELA_SESSION_BUDGET (MCP) / --budget      — cap what a session can spend while experimenting'
+  - 'SOLVELA_MAX_ESCROW_DEPOSIT ($5 default) and SOLVELA_MAX_ESCROW_SESSION ($20 default) — client-side escrow caps'
+fixtures:
+  cross_sdk_402_fixture:
+    file: chat_402_challenge.json (referenced in STATUS.md as the shared fixture the Python, TypeScript and Go SDK tests pin)
+    note: A repository test fixture, not a published sandbox value; useful as the reference shape of a real challenge.
+  reference_addresses:
+    usdc_mint: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    escrow_program_id: 9neDHouXgEgHZDde5SpmqqEZ9Uv35hFcjtFEPxomtHLU
+    note: Published mainnet constants (GET /v1/escrow/config, /pricing); read pay_to from each 402 rather than hard-coding it.
+magic_values: none published

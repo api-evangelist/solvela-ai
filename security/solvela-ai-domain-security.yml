@@ -1,0 +1,46 @@
+generated: '2026-09-19'
+method: probed
+source: live DNS/TLS/HTTP probes of apis.yml + OpenAPI hosts
+hosts:
+- host: solvela.ai
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Nov 13 07:55:42 2026 GMT
+  hsts: true
+  hsts_max_age: 63072000
+  hsts_header: max-age=63072000
+  note: 'hsts was recorded null by probe-domain-security.py; strict-transport-security: max-age=63072000 was observed on the
+    402 DEPLOYMENT_DISABLED response from Vercel on 2026-09-19 (curl -i), so the value is corrected from direct observation.'
+- host: api.solvela.ai
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Nov 14 11:59:46 2026 GMT
+  hsts: true
+  hsts_max_age: 31536000
+  hsts_header: max-age=31536000; includeSubDomains
+  note: 'hsts was recorded null by probe-domain-security.py; strict-transport-security: max-age=31536000; includeSubDomains
+    was observed on every response from the gateway on 2026-09-19 (curl -i), so the value is corrected from direct observation.'
+- host: solvela-gateway.fly.dev
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Nov 19 11:49:32 2026 GMT
+  hsts: true
+  hsts_max_age: 31536000
+  hsts_header: max-age=31536000; includeSubDomains
+  note: 'hsts was recorded null by probe-domain-security.py; strict-transport-security: max-age=31536000; includeSubDomains
+    was same gateway; observed on the agent-card response on 2026-09-19 (curl -i), so the value is corrected from direct observation.'
+domains:
+- domain: solvela.ai
+  dnssec: false
+  caa: []
+  spf: true
+  dmarc: false
+- domain: fly.dev
+  dnssec: false
+  caa: []
+  spf: false
+  dmarc: false
+  note: Platform domain of the OpenAPI servers[1] host, not a Solvela domain; its DNS posture is Fly.io's.
+note: api.solvela.ai answers with content-security-policy default-src none, x-content-type-options nosniff, x-frame-options
+  DENY and referrer-policy no-referrer on every response (observed 2026-09-19). solvela.ai MX is Cloudflare Email Routing;
+  SPF v=spf1 include:_spf.mx.cloudflare.net ~all; no DMARC record; no CAA; DNSSEC not enabled.

@@ -1,0 +1,97 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Solvela Gateway API
+  version: 1.0.0
+extends: ../openapi/solvela-ai-openapi.json
+x-generated: '2026-09-19'
+x-method: generated
+x-source: >-
+  Generated from openapi/solvela-ai-openapi.json plus the probed and searched artifacts in this repo. Captures
+  API Evangelist annotations without mutating the provider's contract, which is saved verbatim. Proposed tags
+  are proposals; the provider declares none.
+actions:
+- target: $.info
+  description: Link the provider's other machine-readable surfaces from the contract.
+  update:
+    x-agent-card: https://api.solvela.ai/.well-known/agent-card.json
+    x-a2a-endpoint: https://api.solvela.ai/a2a
+    x-x402-discovery: https://api.solvela.ai/.well-known/x402
+    x-payment-methods: https://api.solvela.ai/v1/supported
+    x-pricing: https://api.solvela.ai/pricing
+    x-mcp-server:
+      mode: local-stdio
+      install: npx -y @solvela/mcp-server
+      package: https://www.npmjs.com/package/@solvela/mcp-server
+    x-source-code: https://github.com/solvela-ai/solvela
+    x-documentation-source: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+    x-security-policy: https://github.com/solvela-ai/solvela/blob/main/SECURITY.md
+    x-payment:
+      protocol: x402
+      version: 2
+      asset: USDC-SPL (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v)
+      network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+      challenge_status: 402
+      challenge_header: PAYMENT-REQUIRED
+      payment_header: PAYMENT-SIGNATURE
+      schemes_advertised: [exact, escrow]
+      quote_validity_seconds: 300
+      platform_fee_percent_hosted: 0
+- target: $.info
+  description: Record the limits the provider documents and the runtime headers observed, since the contract only declares them on 429 responses.
+  update:
+    x-rate-limits:
+    - {scope: per-wallet (IP fallback), limit: 60, window: 60s, headers: [x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, retry-after]}
+    - {scope: per-IP free tier, limit: 5, window: 60s}
+    - {scope: global free tier, limit: 12, window: 60s}
+    - {scope: per-IP receipt lookups, limit: 20, window: 60s}
+    - {scope: gateway concurrency, limit: 256, window: in-flight}
+    - {scope: request timeout, limit: 120, window: seconds, exhaustion_status: 408}
+    x-request-id-header: x-solvela-request-id
+- target: $.info
+  description: Reversibility and idempotency verdicts from conventions/solvela-ai-conventions.yml.
+  update:
+    x-idempotency: {coverage: none, note: replay protection on payment signatures is not client idempotency}
+    x-reversibility: {grade: verified, scope: escrow scheme only — refund instruction after max_timeout_seconds (300 s); exact scheme has no reversal}
+- target: $.tags
+  description: Proposed tag set; the provider declares no tags.
+  update:
+  - {name: Chat, description: OpenAI-compatible chat completions paid via x402}
+  - {name: Models, description: Model catalog with USDC pricing}
+  - {name: Receipts, description: Payment receipts for paid requests}
+  - {name: Health, description: Liveness}
+- target: $.paths['/v1/chat/completions'].post
+  update:
+    tags: [Chat]
+    x-apievangelist-write: true
+    x-agentic-consequence: physical — spends USDC from the caller's wallet on each paid call
+    x-dry-run: send without PAYMENT-SIGNATURE to receive the price quote without executing
+    x-free-path: zero-priced models (model "free" / "oss" / "open" or a $0 id) need no payment header
+- target: $.paths['/v1/models'].get
+  update:
+    tags: [Models]
+    x-observed: '2026-09-19 — 44 models across 6 providers, 17 priced 0/0, no rate-limit headers (documented as exempt)'
+- target: $.paths['/v1/receipts/{receipt_id}'].get
+  update:
+    tags: [Receipts]
+    x-observed: '2026-09-19 — unknown id returned 404 {"error":{"type":"not_found","message":"receipt not found"}}'
+- target: $.paths['/health'].get
+  update:
+    tags: [Health]
+    x-observed: '2026-09-19 — 200 {"status":"ok"}'
+- target: $.servers[1]
+  description: Clarify the second server.
+  update:
+    x-note: Same Fly.io application under the platform domain; serves byte-identical /openapi.json and agent card. Prefer https://api.solvela.ai.
+- target: $.info
+  description: Routes the provider runs but has not put in this contract (observed live 2026-09-19); listed so a reader knows the spec is a partial projection.
+  update:
+    x-undeclared-routes:
+    - {method: GET, path: /pricing, status: 200}
+    - {method: GET, path: /v1/services, status: 200}
+    - {method: GET, path: /v1/supported, status: 200}
+    - {method: GET, path: /v1/escrow/config, status: 200}
+    - {method: POST, path: /v1/messages, status: 402}
+    - {method: POST, path: /v1/search, status: 402}
+    - {method: POST, path: /v1/solana/price, status: 405 on GET}
+    - {method: POST, path: /a2a, status: 200 JSON-RPC}
+    - {method: GET, path: /v1/orgs, status: 401}

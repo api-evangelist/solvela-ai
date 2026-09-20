@@ -1,0 +1,129 @@
+generated: '2026-09-19'
+method: searched
+status: published
+source: https://registry.npmjs.org/@solvela/mcp-server
+docs: https://github.com/solvela-ai/solvela/blob/main/sdks/mcp/README.md
+summary: >-
+  Solvela ships ONE official MCP server, and it is a local stdio package, not a hosted endpoint: @solvela/mcp-server
+  on npm (0.1.1, published 2026-07-08, Apache-2.0, bin solvela-mcp), source at sdks/mcp/ in the public monorepo.
+  A host runs it with `npx -y @solvela/mcp-server`; the provider's Rust CLI writes that config for Claude Code,
+  Cursor, Claude Desktop and OpenClaw with `solvela mcp install --host=<host>`. The server resolves a
+  non-custodial Solana wallet (SOLANA_WALLET_KEY, else ~/.solvela/wallet.json, else it generates one), then
+  exposes the gateway at SOLVELA_API_URL (default https://api.solvela.ai) as tools that pay for each call in
+  USDC-SPL via x402 transparently. There is no remote MCP endpoint: POST https://api.solvela.ai/mcp returns 404,
+  /.well-known/mcp.json 404, and no OAuth discovery documents are served. The tool list below is read from the
+  published source (sdks/mcp/src/tools.ts), which carries real JSON-Schema inputSchemas; it was not obtained by
+  running the server.
+deployment:
+  mode: local-stdio
+  endpoint: null
+  install: npx -y @solvela/mcp-server
+  package: https://www.npmjs.com/package/@solvela/mcp-server
+  auth: none
+  verified: searched
+  note: >-
+    auth is "none" in the connection sense: nothing authenticates the MCP client to the server. The server holds
+    the user's Solana wallet key locally and pays the gateway per call (x402, USDC-SPL); an optional
+    SOLVELA_SESSION_BUDGET caps session spend client-side. A remote endpoint was probed and does not exist
+    (POST https://api.solvela.ai/mcp -> 404 on 2026-09-19).
+servers:
+- id: solvela-mcp-server
+  name: '@solvela/mcp-server'
+  transport: stdio
+  install:
+    npx: npx -y @solvela/mcp-server
+    global: npm install -g @solvela/mcp-server
+    installer: 'solvela mcp install --host=claude-code | cursor | claude-desktop | openclaw  (from `cargo install solvela-cli`; options --scope=user|project, --wallet, --budget, --signing-mode=auto|escrow|direct|off, --dry-run, --diff, --force)'
+    uninstall: solvela mcp uninstall --host=<host>
+  registry:
+    name: npm
+    package: '@solvela/mcp-server'
+    version: 0.1.1
+    published: '2026-07-08'
+    license: Apache-2.0
+    bin: solvela-mcp
+    repository: https://github.com/solvela-ai/solvela/tree/main/sdks/mcp
+  hosts_documented: [Claude Code, Claude Desktop, Cursor, OpenClaw]
+  environment:
+  - {name: SOLVELA_API_URL, default: 'https://api.solvela.ai', description: Gateway URL}
+  - {name: SOLVELA_SESSION_BUDGET, description: Session spend cap in USDC (e.g. "1.00")}
+  - {name: SOLANA_WALLET_KEY, description: base58 keypair; if unset the server reads or creates ~/.solvela/wallet.json (mode 0600)}
+  - {name: SOLANA_WALLET_ADDRESS, description: wallet pubkey reported by wallet_status}
+  - {name: SOLANA_RPC_URL, default: 'https://api.mainnet-beta.solana.com'}
+  - {name: SOLVELA_ESCROW_MODE, description: '"enabled" adds the deposit_escrow tool'}
+  - {name: SOLVELA_MAX_ESCROW_DEPOSIT, default: '$5 per call'}
+  - {name: SOLVELA_MAX_ESCROW_SESSION, default: '$20 cumulative'}
+  authorship: provider
+  tool_count: 8
+  tools:
+  - name: chat
+    description: Send a prompt to a specific LLM model through the Solvela gateway. Payment is handled automatically via USDC on Solana (x402 protocol).
+    input_schema:
+      required: [model, prompt]
+      properties: {model: string, prompt: string, system: string, max_tokens: number, temperature: number}
+    source_operation: openapi/solvela-ai-openapi.json#createChatCompletion
+    cost: per-token USDC (see plans/)
+  - name: smart_chat
+    description: Send a prompt using the gateway smart router — it picks the cheapest capable model for the request's complexity. Profiles eco, auto (default), premium, free.
+    input_schema:
+      required: [prompt]
+      properties: {prompt: string, profile: 'string enum [eco, auto, premium, free]', system: string, max_tokens: number}
+    source_operation: openapi/solvela-ai-openapi.json#createChatCompletion
+    note: The routing profile travels in the `model` field of the same operation.
+  - name: web_search
+    description: Search the web through the gateway (Tavily upstream); titled, linked snippets. Flat per-call price settled via x402.
+    input_schema:
+      required: [query]
+      properties: {query: 'string (1–2000 chars)', max_results: 'number (clamped to 20)'}
+    source_operation: 'POST /v1/search (live; documented in the README and GET /v1/services; NOT declared in the published OpenAPI)'
+    cost: 0.010 USDC per query (GET /v1/services, 2026-09-19)
+    note: The tool description still says "plus the standard 5% platform fee"; the hosted gateway's live 402 and /pricing report fee_percent 0.
+  - name: solana_price
+    description: Live USD prices for 1–50 SPL mints (Jupiter upstream); flat per-call price charged regardless of null results.
+    input_schema:
+      required: [mints]
+      properties: {mints: 'array of base58 mint strings (1–50)'}
+    source_operation: 'POST /v1/solana/price (live; GET /v1/services; NOT in the published OpenAPI)'
+    cost: 0.001 USDC per query (GET /v1/services, 2026-09-19)
+  - name: wallet_status
+    description: Configured wallet address, gateway health and Solana RPC status.
+    input_schema: {required: [], properties: {}}
+    source_operation: composite — openapi/solvela-ai-openapi.json#health plus a Solana RPC balance read
+    cost: free
+  - name: list_models
+    description: All models available through the gateway with USDC pricing per million tokens; optional substring filter.
+    input_schema: {required: [], properties: {filter: string}}
+    source_operation: openapi/solvela-ai-openapi.json#listModels
+    cost: free
+  - name: spending
+    description: Session spend summary (USDC spent, request count, remaining budget, wallet); reset true clears ~/.solvela/mcp-session.json.
+    input_schema: {required: [], properties: {reset: boolean}}
+    source_operation: client-side session file; no REST call
+    cost: free
+  - name: deposit_escrow
+    description: Deposit USDC into a trustless escrow PDA on Solana for a future call; the gateway claims only what was used and the remainder auto-refunds. Only present when SOLVELA_ESCROW_MODE=enabled.
+    input_schema:
+      required: [amount_usdc]
+      properties: {amount_usdc: 'string (e.g. "2.50")', max_timeout_seconds: 'number (default 300)'}
+    source_operation: on-chain deposit to escrow program 9neDHouXgEgHZDde5SpmqqEZ9Uv35hFcjtFEPxomtHLU, parameters from GET /v1/escrow/config (live; not in the published OpenAPI)
+    gated_by: SOLVELA_ESCROW_MODE=enabled
+  drift_notes:
+  - The monorepo README lists seven tools (omits solana_price); tools.ts exports eight including solana_price. The source is taken as authoritative.
+  - The tools.ts header comment still describes chat as reaching "any model" via the old six-tool set; descriptions mention a 5% fee that the hosted gateway currently suspends.
+remote_probe:
+  fetched: '2026-09-19'
+  probes:
+  - url: https://api.solvela.ai/mcp
+    method: POST
+    body: '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+    http_status: 404
+  - url: https://api.solvela.ai/.well-known/mcp.json
+    http_status: 404
+  - url: https://api.solvela.ai/.well-known/oauth-protected-resource
+    http_status: 404
+  - url: https://mcp.solvela.ai/
+    http_status: 0
+    note: No DNS record.
+related_packages:
+- '@solvela/dropin 0.1.0 (npm, bin solvela-dropin) — a Claude Code sidecar that is NOT an MCP server: point ANTHROPIC_BASE_URL at localhost and it signs a spend-down-channel voucher per request and relays the gateway''s native /v1/messages response.'
+- 'solvela-cli 0.2.0 (crates.io) — carries the `solvela mcp install` host-config installer.'

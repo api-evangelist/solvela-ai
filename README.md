@@ -64,5 +64,10 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Solvela is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry) and added to the network as a stub for full-pipeline profiling.
-- https://solvela.ai/
+Solvela is a Solana-native payment gateway for AI agents: an OpenAI-compatible LLM proxy at api.solvela.ai where every paid request is settled per call in USDC-SPL over the x402 protocol (HTTP 402 quote, signed payment, retry) with no API key and no account, plus a trustless on-chain escrow scheme, a spend-down voucher channel, a 15-dimension smart router across 44 models from six upstream providers (17 of them free), an A2A 0.3.0 agent card, a stdio MCP server and SDKs in TypeScript, Python, Go and Rust. The gateway is open source (BUSL-1.1 gateway, Apache-2.0 libraries) at github.com/solvela-ai/solvela.
+
+- API host: https://api.solvela.ai (live; OpenAPI at /openapi.json, agent card at /.well-known/agent-card.json, x402 discovery at /.well-known/x402)
+- Website: https://solvela.ai/ — on 2026-09-19 the website, docs.solvela.ai and app.solvela.ai all returned HTTP 402 DEPLOYMENT_DISABLED from Vercel; the documentation source is public at https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+- Source and issues: https://github.com/solvela-ai/solvela
+- Prices: https://api.solvela.ai/pricing
+- Profiled 2026-09-19 from the provider's public surface; first surfaced through a2aregistry.org.

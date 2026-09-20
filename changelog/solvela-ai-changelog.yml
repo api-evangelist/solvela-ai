@@ -1,0 +1,219 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+docs:
+- https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+- https://github.com/solvela-ai/solvela/blob/main/STATUS.md
+- https://github.com/solvela-ai/solvela/blob/main/docs/product/feature-state.md
+scheme: Dated headings (YYYY-MM-DD — title) in reverse chronological order under an Unreleased section; each entry is a narrative
+  paragraph naming the pull request, the Fly.io release number it shipped in (e.g. Fly v405..v409) and whether it is deployed.
+  There are no API version tags; the OpenAPI stays at info.version 0.1.0 and the /v1 path prefix throughout.
+current_version: API /v1; OpenAPI 0.1.0; agent card 0.2.0; newest dated entry 2026-07-03; newest deploy named in the product
+  docs Fly v463 (2026-07-14); repository last pushed 2026-09-18
+format_note: Entries are long engineering narratives (the file is 617 lines for ~40 entries) rather than release notes; the
+  Unreleased section carries work merged but not yet deployed. STATUS.md is the companion "live shipping status" log and docs/product/feature-state.md
+  the live-vs-dormant feature table.
+entry_count_captured: 14
+entries:
+- date: null
+  title: Unreleased
+  kind: unreleased
+  breaking: false
+  deployed: null
+  pull_requests: []
+  highlights: '- **Runtime platform-fee knob SOLVELA_PLATFORM_FEE_PERCENT (default 5, fail-closed)** (crates/protocol, crates/router,
+    crates/gateway): the 5% platform fee is now a startup-configurable percentage with ZERO wire-shape change — a 0% fee was
+    already a legal, production-exercised shape (the vendor-settlement proxy path emits fee_percent: 0 / platform_fee: "0.000000").
+    solvela_protocol::platform_fee_percent('
+- date: '2026-07-03'
+  title: 'Refund worker: never-accepted transactions escalate to held (fix α) + channel open rejects account-table-colliding
+    agent wallets (fix β) + hold-CAS signature predicate'
+  kind: fix
+  breaking: false
+  deployed: not stated
+  pull_requests: []
+  highlights: 'Closes the incident found by the 2026-07-03 mainnet rollout smoke against prod v420, via a SYNTHETIC refund
+    row seeded into prod''s channel_refunds (the refund worker is deliberately pool-gated and runs even with SOLVELA_CHANNEL__ENABLED
+    unset; the synthetic rows were deleted after the smoke, so prod''s channel tables are empty and no stuck row remains):
+    a smoke-seeded refund whose destination equaled the recipient'
+- date: '2026-06-17'
+  title: Live x402 402 challenge carries a static extensions.bazaar discovery block (x402scan + agentcash invocability)
+  kind: addition
+  breaking: false
+  deployed: not stated
+  pull_requests: []
+  highlights: 'Finishes the input-schema gap the 2026-06-16 STATUS entry flagged: x402scan reads invocability from the **live
+    402 challenge body** (not OpenAPI), requiring extensions.bazaar.info plus a schema-derived input; without it the resource
+    is marked "strict non-invocable / skipped". The 402 challenge body now embeds a static extensions.bazaar block — info
+    (the x402scan invocability gate, input = {type:http, method:'
+- date: '2026-06-17'
+  title: 'OpenAPI-first x402 discovery surfaces: GET /openapi.json (+ x-payment-info), GET /.well-known/x402, favicon'
+  kind: addition
+  breaking: false
+  deployed: not stated
+  pull_requests: []
+  highlights: 'OpenAPI-first x402 discovery crawlers (x402scan and similar) previously marked Solvela "strict non-invocable
+    / skipped" because both /openapi.json and /.well-known/x402 404''d. Per x402scan''s discovery precedence (OpenAPI → /.well-known/x402
+    → endpoint-only), a resource is indexed as *payable + invocable* only when the served OpenAPI carries, on the paid operation:
+    non-empty accepts[] (already on the live 402)'
+- date: '2026-06-16'
+  title: Unsigned escrow-deposit-tx API for external signers (BYO-wallet funding, PR 1)
+  kind: addition
+  breaking: false
+  deployed: not stated
+  pull_requests:
+  - '597'
+  highlights: '[#597](https://github.com/solvela-ai/solvela/pull/597) — new POST /v1/escrow/deposit-tx returns an **unsigned**
+    escrow-deposit Solana message (base64) plus a decoded_intent object, so any external signer (browser wallet, KMS, hardware)
+    can verify-then-sign and submit it — the gateway holds **no private key** on this path. First PR of the BYO-wallet "Medium"
+    funding slice (lets users fund an agent''s escrow with a '
+- date: '2026-06-15'
+  title: x402 discovery 402 for unpaid probes (registry health-checks); deployed Fly v409
+  kind: addition
+  breaking: false
+  deployed: Fly v409
+  pull_requests:
+  - '584'
+  highlights: '[#584](https://github.com/solvela-ai/solvela/pull/584) — /v1/chat/completions now advertises its x402 402 payment
+    challenge to UNPAID probes so x402 registry health-checkers can discover it. Probers GET the URL or POST an empty/minimal
+    body; previously those hit 405/400/422 (the 402 only fired after a full ChatRequest deserialized), so registries reported
+    "degraded / unknown protocol". The endpoint now returns '
+- date: '2026-06-15'
+  title: A2A AgentCard v0.3 required fields (protocolVersion, preferredTransport, default modes, skill tags); deployed Fly
+    v408
+  kind: addition
+  breaking: false
+  deployed: Fly v408
+  pull_requests:
+  - '580'
+  - '583'
+  highlights: '[#583](https://github.com/solvela-ai/solvela/pull/583) — follow-up to [#580](https://github.com/solvela-ai/solvela/pull/580):
+    make the AgentCard pass a strict A2A v0.3 schema validator. Added the v0.3-required fields the card was missing — protocolVersion:
+    "0.3.0", preferredTransport: "JSONRPC" (the transport the /a2a endpoint speaks), defaultInputModes/defaultOutputModes:
+    ["text/plain"], and tags on the '
+- date: '2026-06-15'
+  title: A2A AgentCard at v0.3 canonical /.well-known/agent-card.json + configurable public_url; deployed Fly v407
+  kind: addition
+  breaking: false
+  deployed: Fly v407
+  pull_requests:
+  - '578'
+  - '580'
+  highlights: '[#580](https://github.com/solvela-ai/solvela/pull/580) — the A2A spec moved the canonical AgentCard location
+    to /.well-known/agent-card.json (RFC 8615). The gateway now serves it there (same handler) and keeps the legacy /.well-known/agent.json
+    as a backward-compat alias, so registries like a2aregistry.org that auto-fetch the v0.3 path can discover Solvela. The
+    card''s url field — the A2A service endpoint agen'
+- date: '2026-06-13'
+  title: 'A2A exactly-once settlement lock + settle-then-fail reorder; deployed Fly v406 (also takes #567/#568 live)'
+  kind: addition
+  breaking: true
+  deployed: Fly v406
+  pull_requests:
+  - '561'
+  - '566'
+  - '567'
+  - '568'
+  - '573'
+  - '574'
+  highlights: '[#574](https://github.com/solvela-ai/solvela/pull/574) (1e741bbf, closes [#566](https://github.com/solvela-ai/solvela/issues/566))
+    — closes a pre-existing A2A concurrency gap: two concurrent message/send calls for one taskId with two *different* valid
+    transactions each passed their own per-tx replay check and validate_submitted_against_offer (which binds to the quoted
+    amount, not a specific tx), so both reach'
+- date: '2026-06-13'
+  title: 'Org budget rollups + analytics polish (E1): read-only org spend-control reporting'
+  kind: addition
+  breaking: false
+  deployed: not stated
+  pull_requests:
+  - '555'
+  - '560'
+  - '568'
+  highlights: '[#568](https://github.com/solvela-ai/solvela/pull/568) — E1 of the Agent Spend Control Plane. Read-only reporting
+    over spend_logs — no hot-path change, no budget-enforcement change, no migration. The already-public GET /v1/orgs/:id/stats
+    gains: an **org budget-vs-spend rollup** computed as the SUM of the org''s teams'' team_budgets limits per period (no
+    org_budgets table), honest about partial coverage — an abs'
+- date: '2026-06-12'
+  title: 'Client-facing payment receipts (P2): durable receipts ledger, X-Solvela-Receipt header, public GET /v1/receipts/{id};
+    deployed Fly v405'
+  kind: addition
+  breaking: false
+  deployed: Fly v405
+  pull_requests:
+  - '539'
+  - '541'
+  - '555'
+  - '556'
+  - '560'
+  - '561'
+  highlights: '[#560](https://github.com/solvela-ai/solvela/pull/560) — P2 of the settlement-platform track: every paid request
+    now produces client-facing audit evidence. A new receipts table (migration 013 — UUID PK, atomic-integer amounts with
+    >= 0 CHECKs, a payment_scheme length cap, and a vendor co-nullability CHECK making half-written vendor rows unrepresentable
+    at the DB layer) is written fire-and-forget **in lock-step '
+- date: '2026-06-12'
+  title: 'Per-service vendor_wallet: direct-to-vendor settlement with vendor-absorbed fee (P1); Python SDK solvela-sdk 0.3.0
+    published to PyPI'
+  kind: addition
+  breaking: false
+  deployed: not stated
+  pull_requests:
+  - '1153'
+  - '475'
+  - '494'
+  - '541'
+  - '554'
+  - '555'
+  highlights: '[#555](https://github.com/solvela-ai/solvela/pull/555) — P1 of the settlement-platform track. A marketplace
+    service registered with vendor_wallet now settles USDC **directly to the vendor''s wallet** — non-custodial, a single
+    transfer, zero wire-format change. The wallet is validated as a Solana pubkey at TOML load and at the admin POST /v1/services/register
+    (fail closed), rejected on internal services and when eq'
+- date: '2026-06-12'
+  title: 'Cross-SDK post-signing-402 parity: PaymentRejectedError unified across Go/TS/Rust; releases on all three registries'
+  kind: addition
+  breaking: false
+  deployed: not stated
+  pull_requests:
+  - '474'
+  - '494'
+  - '547'
+  - '548'
+  - '549'
+  - '550'
+  highlights: 'A docs verify pass during the website revamp found that only Python distinguished "signed and rejected" (a
+    402 returned **after** a signed payment was attached) from the initial 402 challenge. Now unified, with Python as the
+    canonical semantic: [#548](https://github.com/solvela-ai/solvela/pull/548) Go ChatStream converts post-signing 402s to
+    *PaymentRejectedError (signature-guarded; challenge path pinned) → sdks'
+- date: '2026-06-11'
+  title: 'Website + docs revamp: v2 design system, truth audit, new docs pages, diagrams, OG images'
+  kind: addition
+  breaking: true
+  deployed: not stated
+  pull_requests:
+  - '542'
+  - '543'
+  - '544'
+  - '545'
+  - '546'
+  - '553'
+  highlights: 'Six-PR arc rebuilding the public surface around verified claims. [#542](https://github.com/solvela-ai/solvela/pull/542)
+    truth fixes: 26 → **25 models**; free profile → google/gemini-3.1-flash-lite; BUSL Change License corrected Apache-2.0
+    → **MIT**; metrics Distribution/Licensing tables rebuilt from live registry state; nonexistent mock model IDs replaced.
+    [#543](https://github.com/solvela-ai/solvela/pull/543) desi'
+notable_contract_changes:
+- date: '2026-06-17'
+  change: GET /openapi.json served verbatim from docs/openapi.json; x-payment-info extension added to POST /v1/chat/completions;
+    GET /.well-known/x402 discovery document added; servers[] now leads with https://api.solvela.ai
+- date: '2026-06-17'
+  change: Live 402 challenge on /v1/chat/completions gained a static extensions.bazaar discovery block (x402scan / agentcash
+    invocability)
+- date: '2026-06-15'
+  change: A2A agent card moved to the canonical /.well-known/agent-card.json (legacy agent.json kept as alias); protocolVersion,
+    preferredTransport, default modes and skill tags added (Fly v407/v408)
+- date: '2026-06-12'
+  change: GET /v1/receipts/{receipt_id} and the X-Solvela-Receipt response header added (Fly v405)
+- date: 2026-07-05 (approx.)
+  change: Escrow scheme and spend-down channel enabled on the hosted gateway (per feature-state audit of 2026-07-14); 402
+    advertises exact + escrow
+- date: '2026-07-14'
+  change: Semantic response cache (Tier 2) and the USDC-only gas-drip faucet enabled (Fly v462/v463)
+- date: unreleased
+  change: SOLVELA_PLATFORM_FEE_PERCENT runtime knob (default 5, fail-closed); the hosted gateway runs 0%

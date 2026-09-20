@@ -1,0 +1,136 @@
+generated: '2026-09-19'
+method: probed
+source: https://api.solvela.ai/.well-known/agent-card.json
+card:
+  file: a2a/solvela-ai-agent-card.json
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: api.solvela.ai
+  note: >-
+    Served from the API host, which is also the only OpenAPI servers[] host that resolves to Solvela's own
+    domain (the second server, solvela-gateway.fly.dev, is the same Fly.io app under the platform's domain and
+    serves a byte-identical card). The registrable domain solvela.ai and its docs/app subdomains answer HTTP 402
+    text/plain "DEPLOYMENT_DISABLED" from Vercel on every path, including both agent-card paths, so nothing is
+    discoverable there; www.solvela.ai has no DNS record. The legacy /.well-known/agent.json path on api.solvela.ai
+    returns the same 1,454-byte document (the provider's changelog and README describe it as a deliberate
+    backward-compatibility alias of the canonical path). A negative-control path that cannot exist
+    (/.well-known/solvela-ai-negative-control-9c1f2a7e.json) returns a real 404 with an empty body, as do
+    security.txt, openid-configuration, oauth-authorization-server and oauth-protected-resource, so the 200 on
+    the card is a served document and not a catch-all. Ownership is not in question: the card's
+    provider.organization is "Solvela" with provider.url https://solvela.ai, the OpenAPI on the same host titles
+    itself "Solvela Gateway" with contact partnerships@solvela.ai, and the source that renders the card is public
+    at github.com/solvela-ai/solvela (crates/gateway/src/a2a/agent_card.rs).
+conformance:
+  spec: A2A 1.0.0
+  grade: conformant
+  protocol_version: 0.3.0
+  preferred_transport: JSONRPC
+  deviations: []
+  checks:
+    capabilities_is_object: true
+    protocolVersion_present: true
+    skills_is_array: true
+    preferredTransport_present: true
+    defaultInputModes_present: true
+    defaultOutputModes_present: true
+  observations:
+  - documentationUrl https://solvela.ai/docs and iconUrl https://solvela.ai/logo.png both answered HTTP 402 DEPLOYMENT_DISABLED on 2026-09-19; the card points at a documentation site that is currently not served. The documentation source is public at https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs.
+  - The single skill's description says "25 paid models across 5 providers (OpenAPI, Anthropic, Google, xAI, DeepSeek)"; the live GET /v1/models on the same host returned 44 models across 6 providers (NVIDIA NIM added; 17 of them free). The card text lags the catalog.
+  - No securitySchemes/security block. That is consistent with the design: payment (x402, USDC-SPL on Solana) is the authorization, carried in message metadata rather than a credential scheme.
+  - capabilities.stateTransitionHistory and supportsAuthenticatedExtendedCard are absent; both are optional.
+agent_card:
+  name: Solvela
+  description: Solana-native AI agent payment gateway — pay for LLM API calls with USDC-SPL via x402
+  url: https://api.solvela.ai/a2a
+  version: 0.2.0
+  protocol_version: 0.3.0
+  preferred_transport: JSONRPC
+  provider:
+    organization: Solvela
+    url: https://solvela.ai
+  documentation_url: https://solvela.ai/docs
+  icon_url: https://solvela.ai/logo.png
+  default_input_modes: [text/plain]
+  default_output_modes: [text/plain]
+  capabilities:
+    streaming: false
+    push_notifications: false
+    extensions:
+    - uri: https://github.com/google-agentic-commerce/ap2/tree/v0.1
+      description: AP2 merchant for AI agent LLM payments
+      required: true
+      params: {roles: [merchant]}
+    - uri: https://github.com/google-a2a/a2a-x402/v0.1
+      description: x402 on-chain settlement via Solana USDC-SPL
+      required: true
+      params: {network: solana, asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, schemes: [exact, escrow]}
+  skills: 1
+  skill_list:
+  - id: chat-completion
+    name: Chat Completion
+    tags: [llm, chat, completions, ai, x402]
+    input_modes: [text/plain]
+    output_modes: [text/plain]
+    examples: 3
+protocol_surface:
+  endpoint: https://api.solvela.ai/a2a
+  transport: JSON-RPC 2.0 over HTTPS POST
+  methods_documented:
+  - message/send — no taskId returns a Task in input-required state carrying the x402 PaymentRequired quote in metadata (x402.payment.required); with taskId and a payment payload it settles on-chain and returns a completed Task with the completion as artifact plus x402.payment.receipts
+  - tasks/get — task state for roughly 10 minutes after the last state change (Redis TTL); the task id is a bearer capability, rate-limited per client IP
+  - tasks/cancel — only while input-required (before any funds move); otherwise -32002 TaskNotCancelableError
+  - tasks/pushNotificationConfig/* — always -32003 PushNotificationNotSupportedError
+  - message/stream and tasks/resubscribe — not routed (-32601); the card truthfully says streaming false
+  error_codes:
+    '-32001': Task not found or expired
+    '-32002': Task not cancelable
+    '-32003': Push notifications not supported
+    '-32007': Payment failed (replay, offer mismatch, verification or settlement failure)
+    '-32008': Provider error
+    '-32009': Model not found
+  docs: https://github.com/solvela-ai/solvela/blob/main/dashboard/content/docs/concepts/a2a.mdx
+  text_only: true
+  payment: x402 v2, USDC-SPL on Solana mainnet (CAIP-2 solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp); schemes exact and escrow advertised, spend-down channel vouchers accepted but not advertised
+x-evidence:
+  fetched: '2026-09-19'
+  url: https://api.solvela.ai/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json
+  body_bytes: 1454
+  body_parses_as: JSON object with AgentCard shape (name, description, url, version, provider, documentationUrl, iconUrl, protocolVersion, preferredTransport, defaultInputModes, defaultOutputModes, capabilities, skills)
+  response_headers_of_note:
+  - 'x-ratelimit-limit: 60 / x-ratelimit-remaining / x-ratelimit-reset: 60'
+  - 'strict-transport-security: max-age=31536000; includeSubDomains'
+  - 'content-security-policy: default-src ''none'''
+  - 'server: Fly/57f2b87df (2026-09-16)'
+  corroborating_probes:
+  - url: https://api.solvela.ai/.well-known/agent.json
+    http_status: 200
+    note: Legacy pre-0.3 path; byte-identical to the canonical document (cmp).
+  - url: https://solvela-gateway.fly.dev/.well-known/agent-card.json
+    http_status: 200
+    note: Same Fly.io app under the platform domain (the OpenAPI's second servers[] entry); 1,454 bytes, application/json.
+  - url: https://api.solvela.ai/.well-known/solvela-ai-negative-control-9c1f2a7e.json
+    http_status: 404
+    note: Path-echo negative control; empty body. Passed.
+  - url: https://solvela.ai/.well-known/agent-card.json
+    http_status: 402
+    note: 'Vercel DEPLOYMENT_DISABLED (text/plain "Payment required", 78 bytes); the same 402 is returned for / and every other path on solvela.ai, docs.solvela.ai and app.solvela.ai.'
+  - url: https://solvela.ai/.well-known/agent.json
+    http_status: 402
+  - url: https://www.solvela.ai/.well-known/agent-card.json
+    http_status: 0
+    note: No DNS record for www.solvela.ai.
+  - url: https://api.solvela.ai/a2a
+    http_status: 405
+    note: GET on the declared JSON-RPC endpoint returns 405 with an empty body. The endpoint is POST-only.
+  - url: https://api.solvela.ai/a2a
+    method: POST
+    body: '{"jsonrpc":"2.0","id":1,"method":"message/send","params":{}}'
+    http_status: 200
+    response: '{"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"Invalid params: missing field `message`"}}'
+    note: A real JSON-RPC 2.0 responder validating A2A params. No message was sent, no task was created and nothing was purchased.
+  - url: https://a2aregistry.org/api/agents?search=solvela
+    http_status: 200
+    note: The card is listed on a2aregistry.org (author recorded as "Unknown", wellKnownURI https://api.solvela.ai/.well-known/agent-card.json), which is how this provider entered the harvest backlog. The registry was the lead; the card above was fetched from the provider's own host.
