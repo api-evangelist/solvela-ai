@@ -17,6 +17,18 @@ modified: '2026-09-19'
 tags:
 - Company
 - Payments
+- Artificial Intelligence
+- LLM Gateway
+- x402
+- Solana
+- Stablecoins
+- AI Agents
+- MCP
+- A2A
+- Agentic Commerce
+tags_raw:
+- Company
+- Payments
 - AI
 - LLM Gateway
 - x402
@@ -37,6 +49,12 @@ apis:
   humanURL: https://github.com/solvela-ai/solvela
   baseURL: https://api.solvela.ai
   tags:
+  - LLM Gateway
+  - x402
+  - Payments
+  - Solana
+  - Artificial Intelligence
+  tags_raw:
   - LLM Gateway
   - x402
   - Payments
