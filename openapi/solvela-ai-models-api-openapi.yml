@@ -1,0 +1,110 @@
+openapi: 3.2.0
+info:
+  title: Solvela Gateway Models API
+  description: Solana-native AI agent payment gateway. OpenAI-compatible LLM chat completions paid per request in USDC-SPL over the x402 protocol — no API key, no account, just a wallet. A rule-based smart router selects a model per request, an exact-match response cache returns prior answers at zero upstream cost, and a trustless on-chain escrow scheme is available for prepaid sessions.
+  version: 0.1.0
+  license:
+    name: BUSL-1.1
+    identifier: BUSL-1.1
+  contact:
+    email: partnerships@solvela.ai
+    url: https://solvela.ai
+  x-guidance: Pay per request in USDC-SPL on Solana via x402 — no API key or account, just a wallet. POST /v1/chat/completions with no PAYMENT-SIGNATURE header to receive a 402 challenge quoting the USDC cost; sign the quoted `exact` (or `escrow`) payment and resubmit the same request with the signed payload in the PAYMENT-SIGNATURE header. Model catalog at GET /v1/models; x402 discovery at /openapi.json and /.well-known/x402.
+servers:
+- url: https://api.solvela.ai
+  description: Production
+- url: https://solvela-gateway.fly.dev
+  description: Direct Fly host
+tags:
+- name: Models
+paths:
+  /v1/models:
+    get:
+      operationId: listModels
+      summary: List available models with pricing and capabilities
+      description: Returns the model catalog with per-token pricing and capabilities. No payment required.
+      security: []
+      responses:
+        '200':
+          description: Model list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelList'
+      tags:
+      - Models
+components:
+  schemas:
+    ModelList:
+      type: object
+      required:
+      - object
+      - data
+      properties:
+        object:
+          type: string
+          example: list
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - object
+            - provider
+            - display_name
+            - context_window
+            - capabilities
+            - pricing
+            properties:
+              id:
+                type: string
+              object:
+                type: string
+                example: model
+              provider:
+                type: string
+              display_name:
+                type: string
+              context_window:
+                type: integer
+              capabilities:
+                type: object
+                required:
+                - streaming
+                - tools
+                - vision
+                - reasoning
+                properties:
+                  streaming:
+                    type: boolean
+                  tools:
+                    type: boolean
+                  vision:
+                    type: boolean
+                  reasoning:
+                    type: boolean
+              pricing:
+                type: object
+                required:
+                - input_per_million
+                - output_per_million
+                - currency
+                - fee_percent
+                properties:
+                  input_per_million:
+                    type: number
+                  output_per_million:
+                    type: number
+                  currency:
+                    type: string
+                    example: USDC
+                  fee_percent:
+                    type: integer
+                    example: 5
+  securitySchemes:
+    x402Payment:
+      type: apiKey
+      in: header
+      name: PAYMENT-SIGNATURE
+      description: 'x402 payment payload: JSON (raw or base64-encoded) of the form `{ x402_version, resource: {url, method}, accepted: <one entry from the 402 challenge''s accepts[]>, payload: { transaction } | { deposit_tx, service_id, agent_pubkey } }`, where `transaction`/`deposit_tx` is a base64-encoded signed Solana versioned transaction. Omit the header to receive the 402 challenge quoting the price.'

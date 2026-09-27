@@ -1,0 +1,30 @@
+{
+  "provider": "solvela-ai",
+  "sources": [
+    "solvela-ai-openapi.json"
+  ],
+  "outputs": [
+    "solvela-ai-chat-api-openapi.yml",
+    "solvela-ai-health-api-openapi.yml",
+    "solvela-ai-models-api-openapi.yml",
+    "solvela-ai-receipts-api-openapi.yml"
+  ],
+  "archived": [
+    "archived openapi/solvela-ai-openapi.json"
+  ],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "solvela-ai-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "solvela-ai-openapi.json: tagged paths POST /v1/chat/completions -> Chat",
+    "solvela-ai-openapi.json: tagged paths GET /v1/models -> Models",
+    "solvela-ai-openapi.json: tagged paths GET /v1/receipts/{receipt_id} -> Receipts",
+    "solvela-ai-openapi.json: tagged paths GET /health -> Health",
+    "solvela-ai-openapi.json: declared missing tag: Chat",
+    "solvela-ai-openapi.json: declared missing tag: Health",
+    "solvela-ai-openapi.json: declared missing tag: Models",
+    "solvela-ai-openapi.json: declared missing tag: Receipts",
+    "apis.yml register: written (+4 apis, 4 total)"
+  ],
+  "skipped": []
+}

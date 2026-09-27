@@ -1,0 +1,206 @@
+openapi: 3.2.0
+info:
+  title: Solvela Gateway Receipts API
+  description: Solana-native AI agent payment gateway. OpenAI-compatible LLM chat completions paid per request in USDC-SPL over the x402 protocol — no API key, no account, just a wallet. A rule-based smart router selects a model per request, an exact-match response cache returns prior answers at zero upstream cost, and a trustless on-chain escrow scheme is available for prepaid sessions.
+  version: 0.1.0
+  license:
+    name: BUSL-1.1
+    identifier: BUSL-1.1
+  contact:
+    email: partnerships@solvela.ai
+    url: https://solvela.ai
+  x-guidance: Pay per request in USDC-SPL on Solana via x402 — no API key or account, just a wallet. POST /v1/chat/completions with no PAYMENT-SIGNATURE header to receive a 402 challenge quoting the USDC cost; sign the quoted `exact` (or `escrow`) payment and resubmit the same request with the signed payload in the PAYMENT-SIGNATURE header. Model catalog at GET /v1/models; x402 discovery at /openapi.json and /.well-known/x402.
+servers:
+- url: https://api.solvela.ai
+  description: Production
+- url: https://solvela-gateway.fly.dev
+  description: Direct Fly host
+tags:
+- name: Receipts
+paths:
+  /v1/receipts/{receipt_id}:
+    get:
+      operationId: getReceipt
+      summary: Fetch a payment receipt by id
+      description: 'Returns the client-facing receipt for a paid request: payer wallet, payment scheme, transaction reference, and the amounts actually charged (atomic USDC integers are canonical; decimal strings are derived). The unguessable UUIDv4 receipt id — issued in the `X-Solvela-Receipt` response header on paid responses — is the only credential: treat it as a bearer capability. Unknown and malformed ids both return the same 404, and there is no listing endpoint. Free ($0) requests produce no payment and therefore no receipt.'
+      security: []
+      parameters:
+      - name: receipt_id
+        in: path
+        required: true
+        description: UUIDv4 receipt id from the `X-Solvela-Receipt` header.
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The receipt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Receipt'
+        '404':
+          description: Unknown or malformed receipt id (`error.type` = `not_found`). The two cases are deliberately indistinguishable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: 'Rate limited (`error.type`: `rate_limit_exceeded`). This public route carries a stricter per-client-IP cap than the generic limiter (default 20/min) to bound receipt-id scanning. Honor `retry-after` before retrying.'
+          headers:
+            retry-after:
+              description: Seconds until the rate-limit window resets.
+              schema:
+                type: integer
+            x-ratelimit-limit:
+              description: Requests allowed per window.
+              schema:
+                type: integer
+            x-ratelimit-remaining:
+              description: Requests remaining in the current window (always 0 on a 429).
+              schema:
+                type: integer
+            x-ratelimit-reset:
+              description: Seconds until the window resets.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Receipt storage is not configured on this gateway (`error.type` = `service_unavailable`) — receipts cannot exist here at all, so no per-id 404 is implied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      tags:
+      - Receipts
+components:
+  schemas:
+    ReceiptVendorSettlement:
+      type: object
+      description: 'Vendor-settlement evidence, present only when the request hit a marketplace service with a per-service `vendor_wallet`: the agent''s transfer settled `settled_atomic` directly to the vendor on-chain, and Solvela''s platform fee is recorded as an off-chain receivable against the vendor (never charged to the agent).'
+      required:
+      - vendor_wallet
+      - settled_atomic
+      - settled_usdc
+      - fee_receivable_atomic
+      - fee_receivable_usdc
+      properties:
+        vendor_wallet:
+          type: string
+          description: Vendor wallet (base58 pubkey) the payment settled to.
+        settled_atomic:
+          type: integer
+          minimum: 0
+        settled_usdc:
+          type: string
+          example: '0.020000'
+        fee_receivable_atomic:
+          type: integer
+          minimum: 0
+        fee_receivable_usdc:
+          type: string
+          example: '0.001000'
+    Receipt:
+      type: object
+      description: Client-facing payment receipt for a paid request. Atomic-USDC integers (6 decimals) are canonical; the `*_usdc` decimal strings are derived from them. `amount_paid_atomic` is what the payer was actually billed and equals `cost_breakdown.total_atomic` except when an escrow semantic-cache discount realised on-chain. It is the billed amount from the gateway ledger's perspective — identical to the spend ledger — and can differ from the raw on-chain transfer amount when an agent overpays the 402 quote.
+      required:
+      - receipt_id
+      - created_at
+      - model
+      - payment_scheme
+      - payer_wallet
+      - amount_paid_atomic
+      - amount_paid_usdc
+      - cost_breakdown
+      properties:
+        receipt_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+          description: When the receipt was recorded (request completion time, UTC).
+        model:
+          type: string
+          description: Model ID (chat path) or marketplace service ID (services proxy path).
+          example: openai/gpt-4o
+        payment_scheme:
+          type: string
+          description: x402 scheme that settled the payment.
+          example: exact
+        tx_signature:
+          type: string
+          description: Payment transaction reference as recorded on the spend ledger (the signed transaction carried in the payment payload). Absent when no reference was extractable.
+        payer_wallet:
+          type: string
+          description: Payer wallet (base58 pubkey) extracted from the signed payment.
+        amount_paid_atomic:
+          type: integer
+          minimum: 0
+          description: Amount actually billed, atomic USDC. Canonical.
+        amount_paid_usdc:
+          type: string
+          example: '0.002625'
+        cost_breakdown:
+          $ref: '#/components/schemas/ReceiptCostBreakdown'
+        vendor:
+          $ref: '#/components/schemas/ReceiptVendorSettlement'
+    ReceiptCostBreakdown:
+      type: object
+      description: 'Agent-facing cost breakdown that produced the bill: provider cost + platform fee = total. On vendor-settled services the agent fee is 0 (the vendor absorbs the platform fee — see `vendor`).'
+      required:
+      - provider_cost_atomic
+      - provider_cost_usdc
+      - platform_fee_atomic
+      - platform_fee_usdc
+      - total_atomic
+      - total_usdc
+      - currency
+      properties:
+        provider_cost_atomic:
+          type: integer
+          minimum: 0
+        provider_cost_usdc:
+          type: string
+          example: '0.002500'
+        platform_fee_atomic:
+          type: integer
+          minimum: 0
+        platform_fee_usdc:
+          type: string
+          example: '0.000125'
+        total_atomic:
+          type: integer
+          minimum: 0
+        total_usdc:
+          type: string
+          example: '0.002625'
+        currency:
+          type: string
+          example: USDC
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - type
+          - message
+          properties:
+            type:
+              type: string
+              description: 'Machine-readable error kind. Known values: `bad_request`, `model_not_found`, `not_found`, `payment_required`, `invalid_payment`, `settlement_failed`, `forbidden`, `unsupported_media_type`, `rate_limited`, `rate_limit_exceeded`, `provider_error`, `upstream_unavailable`, `service_unavailable`, `internal_error`. New values may be added; treat unknown values as retriable-or-not by HTTP status.'
+              example: invalid_payment
+            message:
+              type: string
+  securitySchemes:
+    x402Payment:
+      type: apiKey
+      in: header
+      name: PAYMENT-SIGNATURE
+      description: 'x402 payment payload: JSON (raw or base64-encoded) of the form `{ x402_version, resource: {url, method}, accepted: <one entry from the 402 challenge''s accepts[]>, payload: { transaction } | { deposit_tx, service_id, agent_pubkey } }`, where `transaction`/`deposit_tx` is a base64-encoded signed Solana versioned transaction. Omit the header to receive the 402 challenge quoting the price.'

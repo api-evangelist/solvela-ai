@@ -11,6 +11,23 @@ x-type: company
 x-source: harvest:a2a-registry
 x-tier: profiled
 x-tier-reason: enrichment pass 2026-09-19 (local-v3; was a2a-registry harvest stub)
+deliveryModel:
+  model: unknown
+  license_evidence:
+    repo: solvela-ai/solvela
+    spdx: NOASSERTION
+    stars: 10
+  open_source: unknown
+  commercial: true
+  callable_host: true
+  label: Delivery model not determined — needs a product licence on record
+  confidence: low
+  source:
+  - openapi
+  - pricing
+  - repository-unlicensed
+  generated: '2026-09-25'
+  method: derived
 specificationVersion: '0.20'
 created: '2026-09-19'
 modified: '2026-09-19'
@@ -39,33 +56,16 @@ tags_raw:
 - A2A
 - Agentic Commerce
 apis:
-- aid: solvela-ai:solvela-gateway-api
-  name: Solvela Gateway API
-  description: 'OpenAI-compatible chat completions paid per request in USDC-SPL on Solana via x402: POST /v1/chat/completions
-    without a PAYMENT-SIGNATURE header returns an HTTP 402 challenge quoting the USDC cost; sign the quoted exact
-    or escrow payment and resubmit. GET /v1/models lists 44 models with per-token USDC pricing, GET /v1/receipts/{receipt_id}
-    returns the payment receipt for a paid call, and GET /health is the liveness probe. Zero-priced NVIDIA NIM and
-    Gemini Flash-Lite models are served free without any payment.'
+- aid: solvela-ai:solvela-ai-chat-api
+  name: Solvela Chat API
+  description: The Chat API from Solvela — 1 operation(s) for chat.
   humanURL: https://github.com/solvela-ai/solvela
   baseURL: https://api.solvela.ai
   tags:
-  - LLM Gateway
-  - x402
-  - Payments
-  - Solana
-  - Artificial Intelligence
-  tags_raw:
-  - LLM Gateway
-  - x402
-  - Payments
-  - Solana
-  - AI
+  - Chat
   properties:
   - type: OpenAPI
-    url: openapi/solvela-ai-openapi.json
-  - type: OpenAPI
-    name: OpenAPI (provider-hosted)
-    url: https://api.solvela.ai/openapi.json
+    url: openapi/solvela-ai-chat-api-openapi.yml
   - type: Documentation
     url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
   - type: APIReference
@@ -73,15 +73,7 @@ apis:
   - type: AgentCard
     url: a2a/solvela-ai-a2a.yml
   - type: AgentCard
-    name: Agent card (provider-hosted)
     url: https://api.solvela.ai/.well-known/agent-card.json
-  - type: Overlay
-    url: overlays/solvela-ai-openapi-overlay.yaml
-  - type: MCPServer
-    url: mcp/solvela-ai-mcp.yml
-  - type: MCPServer
-    name: MCP server (npm, stdio)
-    url: https://www.npmjs.com/package/@solvela/mcp-server
   - type: ToolCrosswalk
     url: mcp/solvela-ai-tool-crosswalk.yml
   - type: WellKnown
@@ -100,8 +92,6 @@ apis:
     url: conventions/solvela-ai-conventions.yml
   - type: DataModel
     url: data-model/solvela-ai-data-model.yml
-  - type: AgentSkill
-    url: skills/_index.yml
   - type: AgenticAccess
     url: agentic-access/solvela-ai-agentic-access.yml
   - type: Sandbox
@@ -112,13 +102,154 @@ apis:
     url: https://github.com/solvela-ai/solvela#quick-start
   - type: SourceCode
     url: https://github.com/solvela-ai/solvela
-  image: https://avatars.githubusercontent.com/u/230226533?v=4
+- aid: solvela-ai:solvela-ai-health-api
+  name: Solvela Health API
+  description: The Health API from Solvela — 1 operation(s) for health.
+  humanURL: https://github.com/solvela-ai/solvela
+  baseURL: https://api.solvela.ai
+  tags:
+  - Health
+  properties:
+  - type: OpenAPI
+    url: openapi/solvela-ai-health-api-openapi.yml
+  - type: Documentation
+    url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+  - type: APIReference
+    url: https://api.solvela.ai/openapi.json
+  - type: AgentCard
+    url: a2a/solvela-ai-a2a.yml
+  - type: AgentCard
+    url: https://api.solvela.ai/.well-known/agent-card.json
+  - type: ToolCrosswalk
+    url: mcp/solvela-ai-tool-crosswalk.yml
+  - type: WellKnown
+    url: well-known/solvela-ai-well-known.yml
+  - type: Pricing
+    url: https://api.solvela.ai/pricing
+  - type: RateLimits
+    url: rate-limits/solvela-ai-rate-limits.yml
+  - type: Plans
+    url: plans/solvela-ai-plans-pricing.yml
+  - type: ErrorCatalog
+    url: errors/solvela-ai-problem-types.yml
+  - type: Authentication
+    url: authentication/solvela-ai-authentication.yml
+  - type: Conventions
+    url: conventions/solvela-ai-conventions.yml
+  - type: DataModel
+    url: data-model/solvela-ai-data-model.yml
+  - type: AgenticAccess
+    url: agentic-access/solvela-ai-agentic-access.yml
+  - type: Sandbox
+    url: sandbox/solvela-ai-sandbox.yml
+  - type: ChangeLog
+    url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+  - type: GettingStarted
+    url: https://github.com/solvela-ai/solvela#quick-start
+  - type: SourceCode
+    url: https://github.com/solvela-ai/solvela
+- aid: solvela-ai:solvela-ai-models-api
+  name: Solvela Models API
+  description: The Models API from Solvela — 1 operation(s) for models.
+  humanURL: https://github.com/solvela-ai/solvela
+  baseURL: https://api.solvela.ai
+  tags:
+  - Models
+  properties:
+  - type: OpenAPI
+    url: openapi/solvela-ai-models-api-openapi.yml
+  - type: Documentation
+    url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+  - type: APIReference
+    url: https://api.solvela.ai/openapi.json
+  - type: AgentCard
+    url: a2a/solvela-ai-a2a.yml
+  - type: AgentCard
+    url: https://api.solvela.ai/.well-known/agent-card.json
+  - type: ToolCrosswalk
+    url: mcp/solvela-ai-tool-crosswalk.yml
+  - type: WellKnown
+    url: well-known/solvela-ai-well-known.yml
+  - type: Pricing
+    url: https://api.solvela.ai/pricing
+  - type: RateLimits
+    url: rate-limits/solvela-ai-rate-limits.yml
+  - type: Plans
+    url: plans/solvela-ai-plans-pricing.yml
+  - type: ErrorCatalog
+    url: errors/solvela-ai-problem-types.yml
+  - type: Authentication
+    url: authentication/solvela-ai-authentication.yml
+  - type: Conventions
+    url: conventions/solvela-ai-conventions.yml
+  - type: DataModel
+    url: data-model/solvela-ai-data-model.yml
+  - type: AgenticAccess
+    url: agentic-access/solvela-ai-agentic-access.yml
+  - type: Sandbox
+    url: sandbox/solvela-ai-sandbox.yml
+  - type: ChangeLog
+    url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+  - type: GettingStarted
+    url: https://github.com/solvela-ai/solvela#quick-start
+  - type: SourceCode
+    url: https://github.com/solvela-ai/solvela
+- aid: solvela-ai:solvela-ai-receipts-api
+  name: Solvela Receipts API
+  description: The Receipts API from Solvela — 1 operation(s) for receipts.
+  humanURL: https://github.com/solvela-ai/solvela
+  baseURL: https://api.solvela.ai
+  tags:
+  - Receipts
+  properties:
+  - type: OpenAPI
+    url: openapi/solvela-ai-receipts-api-openapi.yml
+  - type: Documentation
+    url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+  - type: APIReference
+    url: https://api.solvela.ai/openapi.json
+  - type: AgentCard
+    url: a2a/solvela-ai-a2a.yml
+  - type: AgentCard
+    url: https://api.solvela.ai/.well-known/agent-card.json
+  - type: ToolCrosswalk
+    url: mcp/solvela-ai-tool-crosswalk.yml
+  - type: WellKnown
+    url: well-known/solvela-ai-well-known.yml
+  - type: Pricing
+    url: https://api.solvela.ai/pricing
+  - type: RateLimits
+    url: rate-limits/solvela-ai-rate-limits.yml
+  - type: Plans
+    url: plans/solvela-ai-plans-pricing.yml
+  - type: ErrorCatalog
+    url: errors/solvela-ai-problem-types.yml
+  - type: Authentication
+    url: authentication/solvela-ai-authentication.yml
+  - type: Conventions
+    url: conventions/solvela-ai-conventions.yml
+  - type: DataModel
+    url: data-model/solvela-ai-data-model.yml
+  - type: AgenticAccess
+    url: agentic-access/solvela-ai-agentic-access.yml
+  - type: Sandbox
+    url: sandbox/solvela-ai-sandbox.yml
+  - type: ChangeLog
+    url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+  - type: GettingStarted
+    url: https://github.com/solvela-ai/solvela#quick-start
+  - type: SourceCode
+    url: https://github.com/solvela-ai/solvela
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Overlay
+  url: overlays/solvela-ai-openapi-overlay.yaml
+- type: MCPServer
+  url: https://www.npmjs.com/package/@solvela/mcp-server
 - type: Authentication
   url: authentication/solvela-ai-authentication.yml
 - type: DomainSecurity
@@ -217,3 +348,10 @@ x-coverage:
   - url: https://solvela.ai/docs
     status: 402
   checked: '2026-09-19'
+x-a2a:
+  verified: true
+  probed: '2026-09-26'
+  url: "https://api.solvela.ai/.well-known/agent-card.json"
+  grade: "conformant"
+  protocol_version: "0.3.0"
+  control: 404
