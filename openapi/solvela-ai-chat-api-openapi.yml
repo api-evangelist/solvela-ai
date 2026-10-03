@@ -126,94 +126,32 @@ paths:
       - Chat
 components:
   schemas:
-    ChatCompletionRequest:
-      type: object
-      required:
-      - model
-      - messages
-      properties:
-        model:
-          type: string
-          description: Model ID (e.g. `openai/gpt-4o`), alias (e.g. `sonnet`), or routing profile (`auto`, `eco`, `premium`, `free`). Call `GET /v1/models` for available IDs.
-          example: auto
-        messages:
-          type: array
-          description: 'Conversation messages in OpenAI chat format, ordered oldest to newest (roles: system, user, assistant, tool, developer).'
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-        max_tokens:
-          type: integer
-          minimum: 1
-          description: Max output tokens; clamped to the model limit.
-        temperature:
-          type: number
-          minimum: 0
-          maximum: 2
-        top_p:
-          type: number
-          minimum: 0
-          maximum: 1
-        stream:
-          type: boolean
-          default: false
-          description: Stream the response as Server-Sent Events.
-        tools:
-          type: array
-          items:
-            type: object
-          description: OpenAI-style tool/function definitions.
-        tool_choice:
-          description: OpenAI-style tool choice.
-    ChatCompletionResponse:
+    ToolCall:
       type: object
       required:
       - id
-      - object
-      - created
-      - model
-      - choices
+      - type
+      - function
       properties:
         id:
           type: string
-        object:
+          description: 'Unique identifier for this tool call; echo it back as `tool_call_id` on the follow-up `role: tool` message.'
+        type:
           type: string
-          example: chat.completion
-        created:
-          type: integer
-        model:
-          type: string
-        choices:
-          type: array
-          items:
-            type: object
-            required:
-            - index
-            - message
-            properties:
-              index:
-                type: integer
-              message:
-                $ref: '#/components/schemas/ChatMessage'
-              finish_reason:
-                type:
-                - string
-                - 'null'
-        usage:
-          type:
-          - object
-          - 'null'
+          example: function
+        function:
+          type: object
+          description: The function the model wants invoked.
           required:
-          - prompt_tokens
-          - completion_tokens
-          - total_tokens
+          - name
+          - arguments
           properties:
-            prompt_tokens:
-              type: integer
-            completion_tokens:
-              type: integer
-            total_tokens:
-              type: integer
+            name:
+              type: string
+              description: Function name, matching a `tools[].function.name` from the request.
+            arguments:
+              type: string
+              description: JSON-encoded function arguments.
     PaymentRequired:
       type: object
       description: x402 challenge returned with HTTP 402 when no `PAYMENT-SIGNATURE` header is present. Field names are snake_case; the canonical camelCase rendering travels in the `PAYMENT-REQUIRED` response header.
@@ -305,32 +243,94 @@ components:
             bazaar:
               type: object
               description: 'Coinbase-Bazaar discovery descriptor: `info` (x402scan invocability gate) plus `schema` whose `properties.input.properties.body` is a JSON Schema of the chat request and `properties.output.properties.example` is a representative `chat.completion` response (agentcash schema extraction).'
-    ToolCall:
+    ChatCompletionResponse:
       type: object
       required:
       - id
-      - type
-      - function
+      - object
+      - created
+      - model
+      - choices
       properties:
         id:
           type: string
-          description: 'Unique identifier for this tool call; echo it back as `tool_call_id` on the follow-up `role: tool` message.'
-        type:
+        object:
           type: string
-          example: function
-        function:
-          type: object
-          description: The function the model wants invoked.
+          example: chat.completion
+        created:
+          type: integer
+        model:
+          type: string
+        choices:
+          type: array
+          items:
+            type: object
+            required:
+            - index
+            - message
+            properties:
+              index:
+                type: integer
+              message:
+                $ref: '#/components/schemas/ChatMessage'
+              finish_reason:
+                type:
+                - string
+                - 'null'
+        usage:
+          type:
+          - object
+          - 'null'
           required:
-          - name
-          - arguments
+          - prompt_tokens
+          - completion_tokens
+          - total_tokens
           properties:
-            name:
-              type: string
-              description: Function name, matching a `tools[].function.name` from the request.
-            arguments:
-              type: string
-              description: JSON-encoded function arguments.
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+    ChatCompletionRequest:
+      type: object
+      required:
+      - model
+      - messages
+      properties:
+        model:
+          type: string
+          description: Model ID (e.g. `openai/gpt-4o`), alias (e.g. `sonnet`), or routing profile (`auto`, `eco`, `premium`, `free`). Call `GET /v1/models` for available IDs.
+          example: auto
+        messages:
+          type: array
+          description: 'Conversation messages in OpenAI chat format, ordered oldest to newest (roles: system, user, assistant, tool, developer).'
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        max_tokens:
+          type: integer
+          minimum: 1
+          description: Max output tokens; clamped to the model limit.
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+        top_p:
+          type: number
+          minimum: 0
+          maximum: 1
+        stream:
+          type: boolean
+          default: false
+          description: Stream the response as Server-Sent Events.
+        tools:
+          type: array
+          items:
+            type: object
+          description: OpenAI-style tool/function definitions.
+        tool_choice:
+          description: OpenAI-style tool choice.
     ChatMessage:
       type: object
       required:

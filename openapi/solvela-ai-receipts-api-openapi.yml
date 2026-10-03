@@ -78,31 +78,23 @@ paths:
       - Receipts
 components:
   schemas:
-    ReceiptVendorSettlement:
+    Error:
       type: object
-      description: 'Vendor-settlement evidence, present only when the request hit a marketplace service with a per-service `vendor_wallet`: the agent''s transfer settled `settled_atomic` directly to the vendor on-chain, and Solvela''s platform fee is recorded as an off-chain receivable against the vendor (never charged to the agent).'
       required:
-      - vendor_wallet
-      - settled_atomic
-      - settled_usdc
-      - fee_receivable_atomic
-      - fee_receivable_usdc
+      - error
       properties:
-        vendor_wallet:
-          type: string
-          description: Vendor wallet (base58 pubkey) the payment settled to.
-        settled_atomic:
-          type: integer
-          minimum: 0
-        settled_usdc:
-          type: string
-          example: '0.020000'
-        fee_receivable_atomic:
-          type: integer
-          minimum: 0
-        fee_receivable_usdc:
-          type: string
-          example: '0.001000'
+        error:
+          type: object
+          required:
+          - type
+          - message
+          properties:
+            type:
+              type: string
+              description: 'Machine-readable error kind. Known values: `bad_request`, `model_not_found`, `not_found`, `payment_required`, `invalid_payment`, `settlement_failed`, `forbidden`, `unsupported_media_type`, `rate_limited`, `rate_limit_exceeded`, `provider_error`, `upstream_unavailable`, `service_unavailable`, `internal_error`. New values may be added; treat unknown values as retriable-or-not by HTTP status.'
+              example: invalid_payment
+            message:
+              type: string
     Receipt:
       type: object
       description: Client-facing payment receipt for a paid request. Atomic-USDC integers (6 decimals) are canonical; the `*_usdc` decimal strings are derived from them. `amount_paid_atomic` is what the payer was actually billed and equals `cost_breakdown.total_atomic` except when an escrow semantic-cache discount realised on-chain. It is the billed amount from the gateway ledger's perspective — identical to the spend ledger — and can differ from the raw on-chain transfer amount when an agent overpays the 402 quote.
@@ -148,6 +140,31 @@ components:
           $ref: '#/components/schemas/ReceiptCostBreakdown'
         vendor:
           $ref: '#/components/schemas/ReceiptVendorSettlement'
+    ReceiptVendorSettlement:
+      type: object
+      description: 'Vendor-settlement evidence, present only when the request hit a marketplace service with a per-service `vendor_wallet`: the agent''s transfer settled `settled_atomic` directly to the vendor on-chain, and Solvela''s platform fee is recorded as an off-chain receivable against the vendor (never charged to the agent).'
+      required:
+      - vendor_wallet
+      - settled_atomic
+      - settled_usdc
+      - fee_receivable_atomic
+      - fee_receivable_usdc
+      properties:
+        vendor_wallet:
+          type: string
+          description: Vendor wallet (base58 pubkey) the payment settled to.
+        settled_atomic:
+          type: integer
+          minimum: 0
+        settled_usdc:
+          type: string
+          example: '0.020000'
+        fee_receivable_atomic:
+          type: integer
+          minimum: 0
+        fee_receivable_usdc:
+          type: string
+          example: '0.001000'
     ReceiptCostBreakdown:
       type: object
       description: 'Agent-facing cost breakdown that produced the bill: provider cost + platform fee = total. On vendor-settled services the agent fee is 0 (the vendor absorbs the platform fee — see `vendor`).'
@@ -181,23 +198,6 @@ components:
         currency:
           type: string
           example: USDC
-    Error:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - type
-          - message
-          properties:
-            type:
-              type: string
-              description: 'Machine-readable error kind. Known values: `bad_request`, `model_not_found`, `not_found`, `payment_required`, `invalid_payment`, `settlement_failed`, `forbidden`, `unsupported_media_type`, `rate_limited`, `rate_limit_exceeded`, `provider_error`, `upstream_unavailable`, `service_unavailable`, `internal_error`. New values may be added; treat unknown values as retriable-or-not by HTTP status.'
-              example: invalid_payment
-            message:
-              type: string
   securitySchemes:
     x402Payment:
       type: apiKey

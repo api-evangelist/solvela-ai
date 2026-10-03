@@ -1,7 +1,7 @@
 {
   "provider": "solvela-ai",
   "sources": [
-    "solvela-ai-openapi.json"
+    "_original/solvela-ai-openapi.json"
   ],
   "outputs": [
     "solvela-ai-chat-api-openapi.yml",
@@ -9,12 +9,11 @@
     "solvela-ai-models-api-openapi.yml",
     "solvela-ai-receipts-api-openapi.yml"
   ],
-  "archived": [
-    "archived openapi/solvela-ai-openapi.json"
-  ],
+  "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
     "solvela-ai-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
     "solvela-ai-openapi.json: tagged paths POST /v1/chat/completions -> Chat",
     "solvela-ai-openapi.json: tagged paths GET /v1/models -> Models",
@@ -24,7 +23,12 @@
     "solvela-ai-openapi.json: declared missing tag: Health",
     "solvela-ai-openapi.json: declared missing tag: Models",
     "solvela-ai-openapi.json: declared missing tag: Receipts",
-    "apis.yml register: written (+4 apis, 4 total)"
+    "apis.yml register: already-registered"
   ],
-  "skipped": []
+  "skipped": [
+    "solvela-ai-chat-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "solvela-ai-health-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "solvela-ai-models-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "solvela-ai-receipts-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }
