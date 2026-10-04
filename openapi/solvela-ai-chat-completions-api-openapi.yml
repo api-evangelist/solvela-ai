@@ -16,7 +16,7 @@ servers:
 - url: https://solvela-gateway.fly.dev
   description: Direct Fly host
 tags:
-- name: Chat
+- name: Chat Completions
 paths:
   /v1/chat/completions:
     post:
@@ -123,35 +123,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       tags:
-      - Chat
+      - Chat Completions
 components:
   schemas:
-    ToolCall:
+    ChatMessage:
       type: object
       required:
-      - id
-      - type
-      - function
+      - role
       properties:
-        id:
+        role:
           type: string
-          description: 'Unique identifier for this tool call; echo it back as `tool_call_id` on the follow-up `role: tool` message.'
-        type:
+          enum:
+          - system
+          - user
+          - assistant
+          - tool
+          - developer
+        content:
+          description: Plain string, an array of content parts (text and image_url) for vision-capable models, or null/absent on assistant turns that carry only `tool_calls`. The gateway maps absent and null content to the empty string on input.
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: object
+          - type: 'null'
+        name:
           type: string
-          example: function
-        function:
-          type: object
-          description: The function the model wants invoked.
-          required:
-          - name
-          - arguments
-          properties:
-            name:
-              type: string
-              description: Function name, matching a `tools[].function.name` from the request.
-            arguments:
-              type: string
-              description: JSON-encoded function arguments.
+        tool_calls:
+          type: array
+          description: 'Tool calls requested by the model (assistant messages only). Reply with a `role: tool` message carrying the matching `tool_call_id`.'
+          items:
+            $ref: '#/components/schemas/ToolCall'
+        tool_call_id:
+          type: string
     PaymentRequired:
       type: object
       description: x402 challenge returned with HTTP 402 when no `PAYMENT-SIGNATURE` header is present. Field names are snake_case; the canonical camelCase rendering travels in the `PAYMENT-REQUIRED` response header.
@@ -292,6 +296,23 @@ components:
               type: integer
             total_tokens:
               type: integer
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - type
+          - message
+          properties:
+            type:
+              type: string
+              description: 'Machine-readable error kind. Known values: `bad_request`, `model_not_found`, `not_found`, `payment_required`, `invalid_payment`, `settlement_failed`, `forbidden`, `unsupported_media_type`, `rate_limited`, `rate_limit_exceeded`, `provider_error`, `upstream_unavailable`, `service_unavailable`, `internal_error`. New values may be added; treat unknown values as retriable-or-not by HTTP status.'
+              example: invalid_payment
+            message:
+              type: string
     ChatCompletionRequest:
       type: object
       required:
@@ -331,53 +352,32 @@ components:
           description: OpenAI-style tool/function definitions.
         tool_choice:
           description: OpenAI-style tool choice.
-    ChatMessage:
+    ToolCall:
       type: object
       required:
-      - role
+      - id
+      - type
+      - function
       properties:
-        role:
+        id:
           type: string
-          enum:
-          - system
-          - user
-          - assistant
-          - tool
-          - developer
-        content:
-          description: Plain string, an array of content parts (text and image_url) for vision-capable models, or null/absent on assistant turns that carry only `tool_calls`. The gateway maps absent and null content to the empty string on input.
-          anyOf:
-          - type: string
-          - type: array
-            items:
-              type: object
-          - type: 'null'
-        name:
+          description: 'Unique identifier for this tool call; echo it back as `tool_call_id` on the follow-up `role: tool` message.'
+        type:
           type: string
-        tool_calls:
-          type: array
-          description: 'Tool calls requested by the model (assistant messages only). Reply with a `role: tool` message carrying the matching `tool_call_id`.'
-          items:
-            $ref: '#/components/schemas/ToolCall'
-        tool_call_id:
-          type: string
-    Error:
-      type: object
-      required:
-      - error
-      properties:
-        error:
+          example: function
+        function:
           type: object
+          description: The function the model wants invoked.
           required:
-          - type
-          - message
+          - name
+          - arguments
           properties:
-            type:
+            name:
               type: string
-              description: 'Machine-readable error kind. Known values: `bad_request`, `model_not_found`, `not_found`, `payment_required`, `invalid_payment`, `settlement_failed`, `forbidden`, `unsupported_media_type`, `rate_limited`, `rate_limit_exceeded`, `provider_error`, `upstream_unavailable`, `service_unavailable`, `internal_error`. New values may be added; treat unknown values as retriable-or-not by HTTP status.'
-              example: invalid_payment
-            message:
+              description: Function name, matching a `tools[].function.name` from the request.
+            arguments:
               type: string
+              description: JSON-encoded function arguments.
   securitySchemes:
     x402Payment:
       type: apiKey

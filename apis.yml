@@ -56,52 +56,6 @@ tags_raw:
 - A2A
 - Agentic Commerce
 apis:
-- aid: solvela-ai:solvela-ai-chat-api
-  name: Solvela Chat API
-  description: The Chat API from Solvela — 1 operation(s) for chat.
-  humanURL: https://github.com/solvela-ai/solvela
-  baseURL: https://api.solvela.ai
-  tags:
-  - Chat
-  properties:
-  - type: OpenAPI
-    url: openapi/solvela-ai-chat-api-openapi.yml
-  - type: Documentation
-    url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
-  - type: APIReference
-    url: https://api.solvela.ai/openapi.json
-  - type: AgentCard
-    url: a2a/solvela-ai-a2a.yml
-  - type: AgentCard
-    url: https://api.solvela.ai/.well-known/agent-card.json
-  - type: ToolCrosswalk
-    url: mcp/solvela-ai-tool-crosswalk.yml
-  - type: WellKnown
-    url: well-known/solvela-ai-well-known.yml
-  - type: Pricing
-    url: https://api.solvela.ai/pricing
-  - type: RateLimits
-    url: rate-limits/solvela-ai-rate-limits.yml
-  - type: Plans
-    url: plans/solvela-ai-plans-pricing.yml
-  - type: ErrorCatalog
-    url: errors/solvela-ai-problem-types.yml
-  - type: Authentication
-    url: authentication/solvela-ai-authentication.yml
-  - type: Conventions
-    url: conventions/solvela-ai-conventions.yml
-  - type: DataModel
-    url: data-model/solvela-ai-data-model.yml
-  - type: AgenticAccess
-    url: agentic-access/solvela-ai-agentic-access.yml
-  - type: Sandbox
-    url: sandbox/solvela-ai-sandbox.yml
-  - type: ChangeLog
-    url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
-  - type: GettingStarted
-    url: https://github.com/solvela-ai/solvela#quick-start
-  - type: SourceCode
-    url: https://github.com/solvela-ai/solvela
 - aid: solvela-ai:solvela-ai-health-api
   name: Solvela Health API
   description: The Health API from Solvela — 1 operation(s) for health.
@@ -204,6 +158,52 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/solvela-ai-receipts-api-openapi.yml
+  - type: Documentation
+    url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
+  - type: APIReference
+    url: https://api.solvela.ai/openapi.json
+  - type: AgentCard
+    url: a2a/solvela-ai-a2a.yml
+  - type: AgentCard
+    url: https://api.solvela.ai/.well-known/agent-card.json
+  - type: ToolCrosswalk
+    url: mcp/solvela-ai-tool-crosswalk.yml
+  - type: WellKnown
+    url: well-known/solvela-ai-well-known.yml
+  - type: Pricing
+    url: https://api.solvela.ai/pricing
+  - type: RateLimits
+    url: rate-limits/solvela-ai-rate-limits.yml
+  - type: Plans
+    url: plans/solvela-ai-plans-pricing.yml
+  - type: ErrorCatalog
+    url: errors/solvela-ai-problem-types.yml
+  - type: Authentication
+    url: authentication/solvela-ai-authentication.yml
+  - type: Conventions
+    url: conventions/solvela-ai-conventions.yml
+  - type: DataModel
+    url: data-model/solvela-ai-data-model.yml
+  - type: AgenticAccess
+    url: agentic-access/solvela-ai-agentic-access.yml
+  - type: Sandbox
+    url: sandbox/solvela-ai-sandbox.yml
+  - type: ChangeLog
+    url: https://github.com/solvela-ai/solvela/blob/main/CHANGELOG.md
+  - type: GettingStarted
+    url: https://github.com/solvela-ai/solvela#quick-start
+  - type: SourceCode
+    url: https://github.com/solvela-ai/solvela
+- aid: solvela-ai:solvela-ai-chat-completions-api
+  name: Solvela Chat Completions API
+  description: The Chat Completions API from Solvela — 1 operation(s) for chat completions.
+  humanURL: https://github.com/solvela-ai/solvela
+  baseURL: https://api.solvela.ai
+  tags:
+  - Chat Completions
+  properties:
+  - type: OpenAPI
+    url: openapi/solvela-ai-chat-completions-api-openapi.yml
   - type: Documentation
     url: https://github.com/solvela-ai/solvela/tree/main/dashboard/content/docs
   - type: APIReference
