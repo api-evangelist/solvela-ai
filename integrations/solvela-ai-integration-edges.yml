@@ -1,0 +1,23 @@
+edges:
+- partner_name: OpenAI
+  partner: openai
+  partner_match: domain
+  type: contract
+  channel: provider-built
+  relationship: compatible
+  direction: provider-built
+  evidence: https://github.com/api-evangelist/solvela-ai/blob/main/openapi/solvela-ai-chat-completions-api-openapi.yml#L4
+  contract_reference:
+    repo: solvela-ai
+    spec_file: solvela-ai-chat-completions-api-openapi.yml
+    property: description
+    value: OpenAI-compatible
+    note: 'solvela-ai declares OpenAI compatibility: ''description: Solana-native AI agent payment gateway. OpenAI-compatible
+      LLM chat completions paid per request in USDC-SPL over the x402 protocol — no API key, no'''
+    detected_by: sweep-model-routing.py
+    detected: '2026-10-13'
+  detected_by: sweep-model-routing.py
+  first_seen: '2026-10-13'
+generated: '2026-10-13'
+method: searched
+checked: []
