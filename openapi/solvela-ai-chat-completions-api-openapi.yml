@@ -126,36 +126,6 @@ paths:
       - Chat Completions
 components:
   schemas:
-    ChatMessage:
-      type: object
-      required:
-      - role
-      properties:
-        role:
-          type: string
-          enum:
-          - system
-          - user
-          - assistant
-          - tool
-          - developer
-        content:
-          description: Plain string, an array of content parts (text and image_url) for vision-capable models, or null/absent on assistant turns that carry only `tool_calls`. The gateway maps absent and null content to the empty string on input.
-          anyOf:
-          - type: string
-          - type: array
-            items:
-              type: object
-          - type: 'null'
-        name:
-          type: string
-        tool_calls:
-          type: array
-          description: 'Tool calls requested by the model (assistant messages only). Reply with a `role: tool` message carrying the matching `tool_call_id`.'
-          items:
-            $ref: '#/components/schemas/ToolCall'
-        tool_call_id:
-          type: string
     PaymentRequired:
       type: object
       description: x402 challenge returned with HTTP 402 when no `PAYMENT-SIGNATURE` header is present. Field names are snake_case; the canonical camelCase rendering travels in the `PAYMENT-REQUIRED` response header.
@@ -247,6 +217,101 @@ components:
             bazaar:
               type: object
               description: 'Coinbase-Bazaar discovery descriptor: `info` (x402scan invocability gate) plus `schema` whose `properties.input.properties.body` is a JSON Schema of the chat request and `properties.output.properties.example` is a representative `chat.completion` response (agentcash schema extraction).'
+    ChatMessage:
+      type: object
+      required:
+      - role
+      properties:
+        role:
+          type: string
+          enum:
+          - system
+          - user
+          - assistant
+          - tool
+          - developer
+        content:
+          description: Plain string, an array of content parts (text and image_url) for vision-capable models, or null/absent on assistant turns that carry only `tool_calls`. The gateway maps absent and null content to the empty string on input.
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: object
+          - type: 'null'
+        name:
+          type: string
+        tool_calls:
+          type: array
+          description: 'Tool calls requested by the model (assistant messages only). Reply with a `role: tool` message carrying the matching `tool_call_id`.'
+          items:
+            $ref: '#/components/schemas/ToolCall'
+        tool_call_id:
+          type: string
+    ToolCall:
+      type: object
+      required:
+      - id
+      - type
+      - function
+      properties:
+        id:
+          type: string
+          description: 'Unique identifier for this tool call; echo it back as `tool_call_id` on the follow-up `role: tool` message.'
+        type:
+          type: string
+          example: function
+        function:
+          type: object
+          description: The function the model wants invoked.
+          required:
+          - name
+          - arguments
+          properties:
+            name:
+              type: string
+              description: Function name, matching a `tools[].function.name` from the request.
+            arguments:
+              type: string
+              description: JSON-encoded function arguments.
+    ChatCompletionRequest:
+      type: object
+      required:
+      - model
+      - messages
+      properties:
+        model:
+          type: string
+          description: Model ID (e.g. `openai/gpt-4o`), alias (e.g. `sonnet`), or routing profile (`auto`, `eco`, `premium`, `free`). Call `GET /v1/models` for available IDs.
+          example: auto
+        messages:
+          type: array
+          description: 'Conversation messages in OpenAI chat format, ordered oldest to newest (roles: system, user, assistant, tool, developer).'
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        max_tokens:
+          type: integer
+          minimum: 1
+          description: Max output tokens; clamped to the model limit.
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+        top_p:
+          type: number
+          minimum: 0
+          maximum: 1
+        stream:
+          type: boolean
+          default: false
+          description: Stream the response as Server-Sent Events.
+        tools:
+          type: array
+          items:
+            type: object
+          description: OpenAI-style tool/function definitions.
+        tool_choice:
+          description: OpenAI-style tool choice.
     ChatCompletionResponse:
       type: object
       required:
@@ -313,71 +378,6 @@ components:
               example: invalid_payment
             message:
               type: string
-    ChatCompletionRequest:
-      type: object
-      required:
-      - model
-      - messages
-      properties:
-        model:
-          type: string
-          description: Model ID (e.g. `openai/gpt-4o`), alias (e.g. `sonnet`), or routing profile (`auto`, `eco`, `premium`, `free`). Call `GET /v1/models` for available IDs.
-          example: auto
-        messages:
-          type: array
-          description: 'Conversation messages in OpenAI chat format, ordered oldest to newest (roles: system, user, assistant, tool, developer).'
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-        max_tokens:
-          type: integer
-          minimum: 1
-          description: Max output tokens; clamped to the model limit.
-        temperature:
-          type: number
-          minimum: 0
-          maximum: 2
-        top_p:
-          type: number
-          minimum: 0
-          maximum: 1
-        stream:
-          type: boolean
-          default: false
-          description: Stream the response as Server-Sent Events.
-        tools:
-          type: array
-          items:
-            type: object
-          description: OpenAI-style tool/function definitions.
-        tool_choice:
-          description: OpenAI-style tool choice.
-    ToolCall:
-      type: object
-      required:
-      - id
-      - type
-      - function
-      properties:
-        id:
-          type: string
-          description: 'Unique identifier for this tool call; echo it back as `tool_call_id` on the follow-up `role: tool` message.'
-        type:
-          type: string
-          example: function
-        function:
-          type: object
-          description: The function the model wants invoked.
-          required:
-          - name
-          - arguments
-          properties:
-            name:
-              type: string
-              description: Function name, matching a `tools[].function.name` from the request.
-            arguments:
-              type: string
-              description: JSON-encoded function arguments.
   securitySchemes:
     x402Payment:
       type: apiKey
