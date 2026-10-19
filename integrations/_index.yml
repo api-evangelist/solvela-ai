@@ -23,3 +23,196 @@
     detected: '2026-10-15'
   status: not-a-workflow
   arazzo: null
+- slug: solvela-ai-a2a-protocol-own-agent-card
+  label: A2A protocol (own Agent Card)
+  partner_name: A2A protocol (own Agent Card)
+  category: A2A agent
+  type: register
+  channel: provider-built
+  evidence: https://api.solvela.ai/.well-known/agent-card.json
+  source: edge
+  relationship: compatible
+  contract_reference:
+    register: provider's own /.well-known/agent-card.json
+    spec_file: null
+    standard: A2A
+    role: a2a-agent-card
+    registered_name: Solvela
+    organization: Solvela
+    matched_domain: solvela.ai
+    matched_by: own-domain
+    detected_by: sweep-ai-agents.py
+    detected: '2026-10-15'
+  status: not-a-workflow
+  arazzo: null
+- slug: solvela-ai-a2aregistry-org
+  label: a2aregistry.org
+  partner_name: a2aregistry.org
+  category: A2A agent registry
+  type: register
+  channel: standard-directory
+  evidence: https://a2aregistry.org/api/agents/ae2a9920-b149-499a-969c-e256f6243f4a
+  source: edge
+  relationship: compatible
+  contract_reference:
+    register: a2aregistry.org /api/agents
+    spec_file: null
+    standard: A2A
+    role: a2a-registry-listing
+    registered_name: Solvela
+    matched_domain: solvela.ai
+    matched_by: domain
+    matched_via: card-host
+    listings_context: 1
+    sample_agents:
+    - Solvela
+    detected_by: sweep-ai-agents.py
+    detected: '2026-10-15'
+  status: not-a-workflow
+  arazzo: null
+- slug: solvela-ai-crates-io
+  label: crates.io
+  partner: crates-io
+  partner_name: crates.io
+  category: official SDK (Rust)
+  type: register
+  channel: package-registry
+  evidence: https://crates.io/crates/solvela-cli
+  source: edge
+  relationship: distribution-channel
+  contract_reference:
+    register: crates.io (public registry JSON)
+    spec_file: null
+    language: Rust
+    packages:
+    - name: solvela-cli
+      version: 0.2.0
+      released: '2026-05-14'
+      released_field: updated_at
+      lapsed: false
+      page: https://crates.io/crates/solvela-cli
+      repo_leg: domain:solvela.ai
+      publisher_leg: org:solvela-ai
+      matched_by: domain
+    - name: solvela-protocol
+      version: 0.4.0
+      released: '2026-06-17'
+      released_field: updated_at
+      lapsed: false
+      page: https://crates.io/crates/solvela-protocol
+      repo_leg: domain:solvela.ai
+      publisher_leg: org:solvela-ai
+      matched_by: domain
+    - name: solvela-router
+      version: 0.2.0
+      released: '2026-05-14'
+      released_field: updated_at
+      lapsed: false
+      page: https://crates.io/crates/solvela-router
+      repo_leg: domain:solvela.ai
+      publisher_leg: org:solvela-ai
+      matched_by: domain
+    - name: solvela-x402
+      version: 0.2.0
+      released: '2026-05-14'
+      released_field: updated_at
+      lapsed: false
+      page: https://crates.io/crates/solvela-x402
+      repo_leg: domain:solvela.ai
+      publisher_leg: org:solvela-ai
+      matched_by: domain
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months'
+    detected_by: sweep-official-sdks.py
+    detected: '2026-10-18'
+  status: not-a-workflow
+  arazzo: null
+- slug: solvela-ai-go-module-proxy
+  label: Go module proxy
+  partner_name: Go module proxy
+  category: official SDK (Go)
+  type: register
+  channel: package-registry
+  evidence: https://pkg.go.dev/github.com/solvela-ai/solvela-go
+  source: edge
+  relationship: distribution-channel
+  contract_reference:
+    register: Go module proxy (public registry JSON)
+    spec_file: null
+    language: Go
+    packages:
+    - name: github.com/solvela-ai/solvela-go
+      version: v0.1.0
+      released: '2026-04-28'
+      released_field: Time
+      lapsed: false
+      page: https://pkg.go.dev/github.com/solvela-ai/solvela-go
+      repo_leg: github-org:solvela-ai
+      publisher_leg: org:solvela-ai
+      matched_by: github-org
+    - name: github.com/solvela-ai/solvela/sdks/go
+      version: v0.5.0
+      released: '2026-07-08'
+      released_field: Time
+      lapsed: false
+      page: https://pkg.go.dev/github.com/solvela-ai/solvela/sdks/go
+      repo_leg: github-org:solvela-ai
+      publisher_leg: org:solvela-ai
+      matched_by: github-org
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months'
+    detected_by: sweep-official-sdks.py
+    detected: '2026-10-18'
+  status: not-a-workflow
+  arazzo: null
+- slug: solvela-ai-npm-registry
+  label: npm registry
+  partner: npm
+  partner_name: npm registry
+  category: official SDK (JavaScript/TypeScript)
+  type: register
+  channel: package-registry
+  evidence: https://www.npmjs.com/package/@solvela/dropin
+  source: edge
+  relationship: distribution-channel
+  contract_reference:
+    register: npm registry (public registry JSON)
+    spec_file: null
+    language: JavaScript/TypeScript
+    packages:
+    - name: '@solvela/dropin'
+      version: 0.1.0
+      released: '2026-07-06'
+      released_field: modified
+      lapsed: false
+      page: https://www.npmjs.com/package/@solvela/dropin
+      repo_leg: github-org:solvela-ai
+      publisher_leg: org:solvela
+      matched_by: github-org
+    - name: '@solvela/sdk'
+      version: 0.4.0
+      released: '2026-07-08'
+      released_field: modified
+      lapsed: false
+      page: https://www.npmjs.com/package/@solvela/sdk
+      repo_leg: github-org:solvela-ai
+      publisher_leg: org:solvela
+      matched_by: github-org
+    - name: '@solvela/signer-core'
+      version: 0.2.0
+      released: '2026-07-06'
+      released_field: modified
+      lapsed: false
+      page: https://www.npmjs.com/package/@solvela/signer-core
+      repo_leg: github-org:solvela-ai
+      publisher_leg: org:solvela
+      matched_by: github-org
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months'
+    detected_by: sweep-official-sdks.py
+    detected: '2026-10-18'
+  status: not-a-workflow
+  arazzo: null
