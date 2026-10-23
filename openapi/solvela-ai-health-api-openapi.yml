@@ -49,3 +49,9 @@ components:
       in: header
       name: PAYMENT-SIGNATURE
       description: 'x402 payment payload: JSON (raw or base64-encoded) of the form `{ x402_version, resource: {url, method}, accepted: <one entry from the 402 challenge''s accepts[]>, payload: { transaction } | { deposit_tx, service_id, agent_pubkey } }`, where `transaction`/`deposit_tx` is a base64-encoded signed Solana versioned transaction. Omit the header to receive the 402 challenge quoting the price.'
+x-provenance:
+  method: harvested
+  publisher: Solvela
+  source: https://api.solvela.ai/openapi.json
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
